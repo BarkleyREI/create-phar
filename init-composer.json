@@ -1,0 +1,17 @@
+{
+  "name": "brei/{project}",
+  "description": "",
+  "minimum-stability": "stable",
+  "license": "proprietary",
+  "authors": [
+    {
+      "name": "Joshua Petry",
+      "email": "jpetry@barkleyrei.com"
+    }
+  ],
+  "autoload": {
+    "psr-4": {
+      "rei\\{namespace}\\": ""
+    }
+  }
+}
