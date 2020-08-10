@@ -3,11 +3,15 @@
 use rei\CreatePhar\Output;
 
 // Settings
-$_createPharVersion = '1.3.0';
+$_createPharVersion = '1.3.1';
 $verbose = false;
 $showColors = true;
 
 /**
+ * Version 1.3.1
+ *      - Added creation of index file
+ *      - Will attempt to update Composer
+ *      - Automated version will now include Composer version as well
  * Version 1.3.0
  *      - Moving to self-contained project (refactoring included)
  *      - Additional build output
@@ -117,6 +121,16 @@ if (!file_exists($composerPath)) {
 }
 $composerConfig = json_decode(file_get_contents($composerJsonPath.'composer.json'),true);
 
+Output::printLightGreen("Upgrading Composer if available:\n");
+echo shell_exec('php '.$composerPath.' --working-dir='.$composerJsonPath.' self-update');
+
+// Get composer version
+$output = shell_exec('php '.$composerPath.' --working-dir='.$composerJsonPath.' -V');
+$output = substr($output, strlen('Composer version '));
+$composerVersion = substr($output, 0, strpos($output, ' '));
+echo "Currently using version ".$composerVersion." of Composer.\n";
+print "\n";
+
 Output::printLightGreen("Upgrading and installing from Composer:\n");
 echo shell_exec('php '.$composerPath.' --working-dir='.$composerJsonPath.' u');
 echo shell_exec('php '.$composerPath.' --working-dir='.$composerJsonPath.' i');
@@ -164,7 +178,7 @@ function setNewVersion($v) {
     writeToFile($projectDirectory.'/src/php/Config/Version.php', "<?php /* Auto-generated from create-phar.php - Do not edit */ namespace ".$namespace."Config; class Version { public static function getBuildInfo() { return '$buildString'; } public static function getVersion() { return '$v'; } }");
 }
 
-function getNewVersion($argv) {
+function getNewVersion($argv, $composerVersion) {
 
     if ($argv !== null && is_array($argv) && count($argv) > 1) {
         $v = $argv[1];
@@ -190,6 +204,8 @@ function getNewVersion($argv) {
     }
 
     $v .= ".".time();
+
+    $v .= "-composer".str_replace('.','_', $composerVersion);
 
     Output::printLightCyan("New version being set to $v\n");
 
@@ -242,7 +258,7 @@ $copyRoot = $projectDirectory . "/build";
 $fullPath = $buildRoot . "/" . $project . ".phar";
 
 Output::printLightGreen("\nFinalizing Output:\n");
-$v = getNewVersion($argv);
+$v = getNewVersion($argv, $composerVersion);
 setNewVersion($v);
 
 // Delete from build root

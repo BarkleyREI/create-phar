@@ -52,6 +52,11 @@ class Initialize {
         file_put_contents($this->_projectDirectory.$file, $config);
         Output::PrintLine('Initial composer.json file create at .'.$file);
 
+        $config = file_get_contents(__DIR__.$ds.'init-index.php');
+        $file = $ds.'src'.$ds.'php'.$ds.'index.php';
+        file_put_contents($this->_projectDirectory.$file, $config);
+        Output::PrintLine('Initial index file created at .'.$file);
+
         // Create empty version files
         file_put_contents($this->_projectDirectory.$ds.'src'.$ds.'php'.$ds.'Config'.$ds.'Version.php', '## DO NOT EDIT ##');
         file_put_contents($this->_projectDirectory.$ds.'version.txt', '0.0.1.0');
