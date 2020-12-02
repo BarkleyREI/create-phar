@@ -1,0 +1,10 @@
+{
+  "name": "Project Name",
+  "homepage": "http://www.barkleyrei.com",
+  "repositories": [
+    { "type": "vcs", "url": "https://github.com/mycompany/privaterepo" },
+    { "type": "vcs", "url": "http://svn.example.org/private/repo" },
+    { "type": "vcs", "url": "https://github.com/mycompany/privaterepo2" }
+  ],
+  "require-all": true
+}

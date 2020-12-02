@@ -7,6 +7,7 @@ class Output {
     private const _lineBreak = "\n";
     private const _lightGreen = '1;32';
     private const _lightCyan = '1;36';
+    private const _yellow = '1;33';
 
     // more colors: http://blog.lenss.nl/2012/05/adding-colors-to-php-cli-script-output/
     public static function colorString($str, $colorCode) {
@@ -35,6 +36,12 @@ class Output {
 
     public static function Warning($str) {
         self::printColor($str.self::_lineBreak, '1;33');
+    }
+    public static function Verbose($str, $verbose = true) {
+        if (!$verbose) {
+            return;
+        }
+        self::printColor($str.self::_lineBreak, self::_yellow);
     }
     public static function Error($str = '', $exit = true) {
         $str = self::colorString($str.self::_lineBreak.self::_lineBreak, '1;31');

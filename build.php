@@ -3,11 +3,14 @@
 use rei\CreatePhar\Output;
 
 // Settings
-$_createPharVersion = '1.3.1';
-$verbose = false;
+$_createPharVersion = '1.3.2';
 $showColors = true;
 
 /**
+ * Version 1.3.2
+ *      - Adding verbose option with -v
+ *      - Adding update option with -u
+ *      - Subdirectory files under copied files will become lowercase
  * Version 1.3.1
  *      - Added creation of index file
  *      - Will attempt to update Composer
@@ -43,22 +46,20 @@ $showColors = true;
 
 /*--- Includes --*/
 require_once(__DIR__.'/Output.php');
+require_once(__DIR__.'/PharUtilities.php');
+
+array_shift($argv);
 
 /*--- Variable setup --*/
 $projectDirectory = getcwd(); // directory that the project is running from
 $configIniPath = $projectDirectory.'/src/php/config.ini';   // project config file
+$verbose = hasArgument('-v');
+$update = hasArgument('-u');
 
 /*--- Initial Output ---*/
-//Output::printLightGreen("\n");
-//Output::printLightGreen("Running create-phar version $_createPharVersion.\n");
 Output::PrintHeading('Running create-phar version '.$_createPharVersion);
-//Output::PrintLine();
-//Output::PrintLine('Build: If running from PATH, pass in updated version number as \'create-phar 1.2.4\'');
-//Output::PrintLine('Initialize: To create a new project, run \'create-phar init\' from a new directory.');
-//Output::PrintLine();
-//echo "Pass in the version to update it to a specific version. Example: php .\create-phar.php 1.2.4\n\n";
 
-if (count($argv) >= 2 && $argv[1] == 'init') {
+if (hasArgument('init')) {
     include(__DIR__.'/Initialize.php');
     $init = new \rei\CreatePhar\Initialize($projectDirectory);
     $init->Execute();
@@ -73,6 +74,19 @@ if (!file_exists($configIniPath)) {
 Output::PrintLine('Project directory: '.$projectDirectory);
 Output::PrintLine('Project configuration: '.$configIniPath);
 Output::PrintLine('Build script directory: '.__DIR__);
+
+if ($verbose) {
+    Output::PrintLine('Running with verbose output.');
+} else {
+    Output::PrintLine('Running with normal output. To run verbose, pass argument -v');
+}
+
+if ($update) {
+    Output::PrintLine('Updating Composer and dependencies.');
+} else {
+    Output::PrintLine('Will not update Composer or dependencies. To do so, pass argument -u');
+}
+
 
 
 
@@ -121,8 +135,10 @@ if (!file_exists($composerPath)) {
 }
 $composerConfig = json_decode(file_get_contents($composerJsonPath.'composer.json'),true);
 
-Output::printLightGreen("Upgrading Composer if available:\n");
-echo shell_exec('php '.$composerPath.' --working-dir='.$composerJsonPath.' self-update');
+if ($update) {
+    Output::printLightGreen("Upgrading Composer if available:\n");
+    echo shell_exec('php ' . $composerPath . ' --working-dir=' . $composerJsonPath . ' self-update');
+}
 
 // Get composer version
 $output = shell_exec('php '.$composerPath.' --working-dir='.$composerJsonPath.' -V');
@@ -131,10 +147,12 @@ $composerVersion = substr($output, 0, strpos($output, ' '));
 echo "Currently using version ".$composerVersion." of Composer.\n";
 print "\n";
 
-Output::printLightGreen("Upgrading and installing from Composer:\n");
-echo shell_exec('php '.$composerPath.' --working-dir='.$composerJsonPath.' u');
-echo shell_exec('php '.$composerPath.' --working-dir='.$composerJsonPath.' i');
-print "\n";
+if ($update) {
+    Output::printLightGreen("Upgrading and installing from Composer:\n");
+    echo shell_exec('php ' . $composerPath . ' --working-dir=' . $composerJsonPath . ' u');
+    echo shell_exec('php ' . $composerPath . ' --working-dir=' . $composerJsonPath . ' i');
+    print "\n";
+}
 
 
 
@@ -149,7 +167,23 @@ echo shell_exec('php '.$composerPath.' --working-dir='.$composerJsonPath.' dump-
 $namespace = array_keys($composerConfig['autoload']['psr-4'])[0];
 
 
-
+/**
+ * Determines if a certain argument value was set
+ * @param $argCheck
+ * @return bool
+ */
+function hasArgument($argCheck) {
+    global $argv;
+    if ($argv === null || count($argv) === 0) {
+        return false;
+    }
+    foreach ($argv as $arg) {
+        if (strtolower($arg) === strtolower($argCheck)) {
+            return true;
+        }
+    }
+    return false;
+}
 
 function getCurrentVersion() {
     global $projectDirectory;
@@ -178,11 +212,24 @@ function setNewVersion($v) {
     writeToFile($projectDirectory.'/src/php/Config/Version.php', "<?php /* Auto-generated from create-phar.php - Do not edit */ namespace ".$namespace."Config; class Version { public static function getBuildInfo() { return '$buildString'; } public static function getVersion() { return '$v'; } }");
 }
 
-function getNewVersion($argv, $composerVersion) {
+function getNewVersion($composerVersion) {
 
-    if ($argv !== null && is_array($argv) && count($argv) > 1) {
-        $v = $argv[1];
-        if ($v == 'init') {
+    global $argv;
+
+    $v = null;
+
+    if ($argv !== null && is_array($argv)) {
+        foreach ($argv as $arg) {
+            $p = strpos($arg, '.');
+            if ($p !== false && strpos($arg, '.', $p) !== false) {
+                $v = $arg;
+            }
+        }
+    }
+
+    if ($v !== null) {
+
+        if (hasArgument('init')) {
             $v = '0.0.1.0';
         }
         Output::printLightCyan("Using $v as new version number\n");
@@ -215,6 +262,8 @@ function getNewVersion($argv, $composerVersion) {
 
 function custom_copy($src, $dst) {
 
+    global $verbose;
+
     if (!is_dir($src)) {
         copy($src, $dst);
         return;
@@ -239,7 +288,11 @@ function custom_copy($src, $dst) {
 
             }
             else {
-                copy($src . '/' . $file, $dst . '/' . $file);
+                $source = $src . DIRECTORY_SEPARATOR . $file;
+                $destination = strtolower($dst) . DIRECTORY_SEPARATOR . strtolower($file);
+                //copy($src . '/' . $file, $dst . '/' . $file);
+                copy($source, $destination);
+                Output::Verbose('Copied '.$destination, $verbose);
             }
         }
     }
@@ -258,7 +311,7 @@ $copyRoot = $projectDirectory . "/build";
 $fullPath = $buildRoot . "/" . $project . ".phar";
 
 Output::printLightGreen("\nFinalizing Output:\n");
-$v = getNewVersion($argv, $composerVersion);
+$v = getNewVersion($composerVersion);
 setNewVersion($v);
 
 // Delete from build root
@@ -290,8 +343,11 @@ if (!WINDOWS_SERVER) {
 if ($deleteError) {
     echo 'file delete error';
 }
-
-
+//if (is_dir($buildRoot)) {
+//    PharUtilities::DeleteDirectoryAndContents($buildRoot);
+//}
+//exec("mkdir \"$buildRoot\"", $lines, $deleteError);
+////mkdir($buildRoot);
 
 
 
@@ -312,9 +368,18 @@ if ($doPhar) {
         new \RecursiveDirectoryIterator($srcRoot, \FilesystemIterator::SKIP_DOTS)
     );
 
+
+//    foreach ($iterator as $key => $value) {
+//        PharUtilities::ExtractToTempDirectory($srcRoot, $key);
+//    }
+
     $filterIterator = new CallbackFilterIterator($iterator, function ($file) {
 
         global $excludeDirectories, $vendorIncludes, $vendorExcludes, $useDeprecatedVendors, $verbose;
+
+//        if (PharUtilities::IsPhar($file)) {
+//            return false;
+//        }
 
         $lcFile = strtolower($file);
         $dispFile = $lcFile;
@@ -328,14 +393,10 @@ if ($doPhar) {
             $exDir = strtolower($exDir);
 
             if (strPos($lcFile, "/$exDir/") !== false) {
-                if ($verbose) {
-                    echo "Exclusion: Match on /$exDir/ to $dispFile\n";
-                }
+                Output::Verbose("Exclusion: Match on /$exDir/ to $dispFile", $verbose);
                 return false;
             } elseif (strPos($lcFile, "\\$exDir\\") !== false) {
-                if ($verbose) {
-                    echo "Exclusion: Match on \\$exDir\\ to $dispFile\n";
-                }
+                Output::Verbose("Exclusion: Match on \\$exDir\\ to $dispFile", $verbose);
                 return false;
             }
         }
@@ -372,6 +433,9 @@ if ($doPhar) {
 
 
         //echo "Including: $dispFile\n";
+
+
+        Output::Verbose('Including: '.$dispFile, $verbose);
         return true;
 
     });
@@ -391,6 +455,8 @@ if ($doPhar) {
     copy($buildRoot . "/" . $project . ".phar", $buildRoot . "/" . $project . ".ext");
     Output::printLightCyan("PHAR file copied as .ext");
 
+    //PharUtilities::CleanUp($srcRoot);
+
     echo "\n";
 
 }
@@ -408,7 +474,8 @@ if ($doManual) {
         }
     }
 
-    echo "Copying specified files over manually:\n";
+    //echo "Copying specified files over manually:\n";
+    Output::Verbose('Copying the following files to build directory:', $verbose);
 
     $dir = new RecursiveDirectoryIterator($srcRoot, FilesystemIterator::SKIP_DOTS);
 
@@ -424,7 +491,8 @@ if ($doManual) {
 
                 $manualDir = strtolower($manualDir);
                 if (strPos($lcfile, $manualDir) !== false) {
-                    echo "\t$lcfile to $copyRoot/$lcfile\n";
+
+                    Output::Verbose("\t$lcfile to $copyRoot/$lcfile", $verbose);
 
                     //copy_r($srcRoot."/".$lcfile, $copyRoot."/".$lcfile);
 
@@ -433,14 +501,12 @@ if ($doManual) {
                         if( $file == "." || $file == ".." ) {
                             continue;
                         }
-                        if ($verbose) {
-                            echo "\t\t$file\n";
-                        }
+                        Output::Verbose("\t\t$file", $verbose);
                         //echo "\t\t\t".$srcRoot."/".$file, $copyRoot."/".$lcfile."\n";
 
                         $copyDir = $copyRoot.DIRECTORY_SEPARATOR.$lcfile;
                         if (!file_exists($copyDir)) {
-                            echo "Creating $copyDir...\n";
+                            Output::Verbose("Creating $copyDir...", $verbose);
                             mkdir($copyDir, 0777, true);
                         }
 
