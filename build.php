@@ -3,10 +3,12 @@
 use rei\CreatePhar\Output;
 
 // Settings
-$_createPharVersion = '1.3.2';
+$_createPharVersion = '1.3.3';
 $showColors = true;
 
 /**
+ * Version 1.3.3
+ * 		- Support for running on Macs
  * Version 1.3.2
  *      - Adding verbose option with -v
  *      - Adding update option with -u
