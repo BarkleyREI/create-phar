@@ -125,8 +125,8 @@ if ($useDeprecatedVendors) {
 print "\n";
 
 
-$composerPath = __DIR__.'\\composer.phar';
-$composerJsonPath = $projectDirectory.'\\src\\php\\';
+$composerPath = __DIR__.'/composer.phar';
+$composerJsonPath = $projectDirectory.'/src/php/';
 
 if (!file_exists($composerPath)) {
     Output::dieMsg("\tCannot find composer.phar file at ".$composerPath);
@@ -395,8 +395,8 @@ if ($doPhar) {
             if (strPos($lcFile, "/$exDir/") !== false) {
                 Output::Verbose("Exclusion: Match on /$exDir/ to $dispFile", $verbose);
                 return false;
-            } elseif (strPos($lcFile, "\\$exDir\\") !== false) {
-                Output::Verbose("Exclusion: Match on \\$exDir\\ to $dispFile", $verbose);
+            } elseif (strPos($lcFile, "/$exDir/") !== false) {
+                Output::Verbose("Exclusion: Match on /$exDir/ to $dispFile", $verbose);
                 return false;
             }
         }
@@ -408,14 +408,14 @@ if ($doPhar) {
 
             if ($useDeprecatedVendors) {
                 foreach ($vendorIncludes as $vendorInclude) {
-                    if (strpos($lcFile, 'vendor\\' . $vendorInclude) !== false || strpos($lcFile, 'vendor\\autoload.php') !== false) {
+                    if (strpos($lcFile, 'vendor/' . $vendorInclude) !== false || strpos($lcFile, 'vendor/autoload.php') !== false) {
                         $inc = true;
                         break;
                     }
                 }
             } else {
                 foreach ($vendorExcludes as $vendorExclude) {
-                    if (strpos($lcFile, 'vendor\\' . $vendorExclude) !== false) {
+                    if (strpos($lcFile, 'vendor/' . $vendorExclude) !== false) {
                         $inc = false;
                         break;
                     }
