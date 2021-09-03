@@ -61,4 +61,5 @@ class Output {
         echo self::_lineBreak.self::colorString($str,self::_lightGreen).self::_lineBreak;
     }
 
+
 }

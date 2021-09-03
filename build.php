@@ -2,11 +2,16 @@
 
 use rei\CreatePhar\Output;
 
+require_once('ComposerProject.php');
+
 // Settings
-$_createPharVersion = '1.3.3';
+$_createPharVersion = '1.3.4';
 $showColors = true;
 
 /**
+ * Version 1.3.5
+ *      - Updates the version number in the project's composer.json to support local repository references
+ *      - Updated composer (for builds) to 2.1.6
  * Version 1.3.3
  * 		- Support for running on Macs
  * Version 1.3.2
@@ -437,14 +442,19 @@ if ($doPhar) {
         //echo "Including: $dispFile\n";
 
 
-        Output::Verbose('Including: '.$dispFile, $verbose);
+        Output::Verbose('Including: ' . $dispFile, $verbose);
         return true;
 
     });
 
     $phar->buildFromIterator($filterIterator, $srcRoot);
 
-
+    // Add index file from root, if it exists
+//    $indexFilePath = $srcRoot . DIRECTORY_SEPARATOR . 'index.php';
+//    if (file_exists($indexFilePath)) {
+//        $phar->addFile($indexFilePath);
+//        Output::Verbose('Added root index.php file',true);
+//    }
 
 
     $phar->setStub($phar->createDefaultStub("index.php"));
@@ -533,3 +543,15 @@ if ($doManual) {
 
 echo "\n";
 Output::printLightGreen("PHAR creation process completed!\n\n");
+
+
+Output::PrintHeading("Creating local composer project:");
+$composerJsonFilePath = $composerJsonPath . 'composer.json';
+if (!file_exists($composerJsonFilePath)) {
+    Output::Warning("Composer JSON file does not exist for this project. Skipping this step.");
+    Output::Warning($composerJsonFilePath);
+} else {
+    $cp = new ComposerProject($composerJsonFilePath);
+    $cp_v = $cp->UpdateVersion($v);
+    Output::PrintLine("Composer project updated as version $cp_v");
+}
