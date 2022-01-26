@@ -1,15 +1,22 @@
 <?php
 
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
 use rei\CreatePhar\Output;
 
 require_once('ComposerProject.php');
 
 // Settings
-$_createPharVersion = '1.3.4';
+$_createPharVersion = '1.3.5';
 $showColors = true;
 
 /**
  * Version 1.3.5
+ *      - Adjusted shell_exec commands to better support spaces in directory names
+ *      - Check for phar.readonly setting initially, and exit if failure
+ * Version 1.3.4
  *      - Updates the version number in the project's composer.json to support local repository references
  *      - Updated composer (for builds) to 2.1.6
  * Version 1.3.3
@@ -71,6 +78,13 @@ if (hasArgument('init')) {
     $init = new \rei\CreatePhar\Initialize($projectDirectory);
     $init->Execute();
 }
+
+
+/*--- Check php.ini settings ---*/
+if(ini_get('phar.readonly') == true) {
+    Output::dieMsg('php.ini file needs the value for "phar.readonly" set to "Off". Your current php.ini is located at: '.php_ini_loaded_file());
+}
+
 
 /*--- Config settings ---*/
 Output::printLightGreen("Configuration settings:\n");
@@ -144,11 +158,11 @@ $composerConfig = json_decode(file_get_contents($composerJsonPath.'composer.json
 
 if ($update) {
     Output::printLightGreen("Upgrading Composer if available:\n");
-    echo shell_exec('php ' . $composerPath . ' --working-dir=' . $composerJsonPath . ' self-update');
+    echo shell_exec('php "' . $composerPath . '" --working-dir "' . $composerJsonPath . '" self-update');
 }
 
 // Get composer version
-$output = shell_exec('php '.$composerPath.' --working-dir='.$composerJsonPath.' -V');
+$output = shell_exec('php "'.$composerPath.'" --working-dir "'.$composerJsonPath.'" -V');
 $output = substr($output, strlen('Composer version '));
 $composerVersion = substr($output, 0, strpos($output, ' '));
 echo "Currently using version ".$composerVersion." of Composer.\n";
@@ -156,8 +170,8 @@ print "\n";
 
 if ($update) {
     Output::printLightGreen("Upgrading and installing from Composer:\n");
-    echo shell_exec('php ' . $composerPath . ' --working-dir=' . $composerJsonPath . ' u');
-    echo shell_exec('php ' . $composerPath . ' --working-dir=' . $composerJsonPath . ' i');
+    echo shell_exec('php "' . $composerPath . '" --working-dir "' . $composerJsonPath . '" u');
+    echo shell_exec('php "' . $composerPath . '" --working-dir "' . $composerJsonPath . '" i');
     print "\n";
 }
 
@@ -170,7 +184,8 @@ Output::printLightGreen("Setting up project to support autoload through Composer
 if (!isset($composerConfig['autoload']['psr-4'])) {
     Output::dieMsg('You must have setup autoload/psr-4 section of your composer.json to support autoloading. Please fix before continuing.');
 }
-echo shell_exec('php '.$composerPath.' --working-dir='.$composerJsonPath.' dump-autoload -o');
+
+echo shell_exec('php "'.$composerPath.'" --working-dir "'.$composerJsonPath.'" dump-autoload -o');
 $namespace = array_keys($composerConfig['autoload']['psr-4'])[0];
 
 

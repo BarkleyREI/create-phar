@@ -30,6 +30,11 @@ class Output {
     public static function printLightCyan($str) {
         self::printColor($str, self::_lightCyan);
     }
+
+    /**
+     * Outputs a message about halting the process, and calls die(), ending execution.
+     * @param $str
+     */
     public static function dieMsg($str) {
         die(self::colorString($str.self::_lineBreak.self::_lineBreak, '1;31'));
     }
