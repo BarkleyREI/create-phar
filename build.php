@@ -9,10 +9,13 @@ use rei\CreatePhar\Output;
 require_once('ComposerProject.php');
 
 // Settings
-$_createPharVersion = '1.3.5';
+$_createPharVersion = '1.3.6';
 $showColors = true;
 
 /**
+ * Version 1.3.6
+ *      - writeToFile(...) now creates a file if it doesn't exist
+ *      - Build adds a .htaccess file to send phar and ext files to the PHP interpreter
  * Version 1.3.5
  *      - Adjusted shell_exec commands to better support spaces in directory names
  *      - Check for phar.readonly setting initially, and exit if failure
@@ -221,9 +224,6 @@ function getCurrentVersion() {
 }
 
 function writeToFile($file, $content) {
-    if (!file_exists($file)) {
-        Output::dieMsg('File '.$file.' does not exist. Please create an empty file there first.');
-    }
     file_put_contents($file, $content);
 }
 
@@ -481,6 +481,9 @@ if ($doPhar) {
 
     copy($buildRoot . "/" . $project . ".phar", $buildRoot . "/" . $project . ".ext");
     Output::printLightCyan("PHAR file copied as .ext");
+
+    $htaccess = 'AddHandler application/x-httpd-php .phar .ext .php';
+    writeToFile($buildRoot . '/.htaccess', $htaccess);
 
     //PharUtilities::CleanUp($srcRoot);
 
