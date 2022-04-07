@@ -9,10 +9,12 @@ use rei\CreatePhar\Output;
 require_once('ComposerProject.php');
 
 // Settings
-$_createPharVersion = '1.3.6';
+$_createPharVersion = '1.3.7';
 $showColors = true;
 
 /**
+ * Version 1.3.7
+ *      - Fixed an issue with composer dump-autoload
  * Version 1.3.6
  *      - writeToFile(...) now creates a file if it doesn't exist
  *      - Build adds a .htaccess file to send phar and ext files to the PHP interpreter
@@ -188,7 +190,7 @@ if (!isset($composerConfig['autoload']['psr-4'])) {
     Output::dieMsg('You must have setup autoload/psr-4 section of your composer.json to support autoloading. Please fix before continuing.');
 }
 
-echo shell_exec('php "'.$composerPath.'" --working-dir "'.$composerJsonPath.'" dump-autoload -o');
+echo shell_exec('php "'.$composerPath.'" --working-dir="'.$composerJsonPath.'" dump-autoload -o');
 $namespace = array_keys($composerConfig['autoload']['psr-4'])[0];
 
 
