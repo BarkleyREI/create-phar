@@ -9,10 +9,14 @@ use rei\CreatePhar\Output;
 require_once('ComposerProject.php');
 
 // Settings
-$_createPharVersion = '1.3.7';
+$_createPharVersion = '1.3.8';
 $showColors = true;
 
 /**
+ * Version 1.3.8
+ *      - Updates to output
+ *      - Warning will be output with manual_copy_files value is set (which is not supported)
+ *      - Added phar_in_manual_copies config value, which copies the build phar file into the manually copied folders
  * Version 1.3.7
  *      - Fixed an issue with composer dump-autoload
  * Version 1.3.6
@@ -76,7 +80,7 @@ $verbose = hasArgument('-v');
 $update = hasArgument('-u');
 
 /*--- Initial Output ---*/
-Output::PrintHeading('Running create-phar version '.$_createPharVersion);
+Output::Heading('Running create-phar version '.$_createPharVersion);
 
 if (hasArgument('init')) {
     include(__DIR__.'/Initialize.php');
@@ -92,25 +96,25 @@ if(ini_get('phar.readonly') == true) {
 
 
 /*--- Config settings ---*/
-Output::printLightGreen("Configuration settings:\n");
+Output::Heading("Configuration settings:\n");
 if (!file_exists($configIniPath)) {
     Output::Warning('This project may not have initialized. To setup a project at this location, run the command \'create-phar init\'');
     Output::Error('Exiting... cannot find configuration file at path '.$configIniPath);
 }
-Output::PrintLine('Project directory: '.$projectDirectory);
-Output::PrintLine('Project configuration: '.$configIniPath);
-Output::PrintLine('Build script directory: '.__DIR__);
+Output::Message('Project directory: '.$projectDirectory);
+Output::Message('Project configuration: '.$configIniPath);
+Output::Message('Build script directory: '.__DIR__);
 
 if ($verbose) {
-    Output::PrintLine('Running with verbose output.');
+    Output::Message('Running with verbose output.');
 } else {
-    Output::PrintLine('Running with normal output. To run verbose, pass argument -v');
+    Output::Message('Running with normal output. To run verbose, pass argument -v');
 }
 
 if ($update) {
-    Output::PrintLine('Updating Composer and dependencies.');
+    Output::Message('Updating Composer and dependencies.');
 } else {
-    Output::PrintLine('Will not update Composer or dependencies. To do so, pass argument -u');
+    Output::Message('Will not update Composer or dependencies. To do so, pass argument -u');
 }
 
 
@@ -120,11 +124,24 @@ $ini = parse_ini_file($configIniPath,true);
 $project = $ini['project']['name'];
 $excludeDirectories = explode(",", $ini['project']['exclude_directories']);
 $manualCopies = explode(",", $ini['project']['manual_copies']);
-$manualCopyFiles = explode(",", $ini['project']['manual_copy_files']);
+
+$manualCopyFiles = isset($ini['project']['manual_copy_files']) ? explode(",", $ini['project']['manual_copy_files']) : array();
+if (count($manualCopyFiles) > 0) {
+    Output::Warning('Your project configuration has a defined \'manual_copy_files\' value. This functionality is no longer supported.');
+}
+
+$includePharInCopiedFolders = isset($ini['project']['phar_in_manual_copies']) && $ini['project']['phar_in_manual_copies'] == '1';
+if ($includePharInCopiedFolders) {
+    Output::Message('PHAR file will be copied into any defined manual_copy directories.');
+} else {
+    Output::Message('Directories copied through manual_copy will need to reference PHAR outside of their root.');
+}
+
+
 
 $useDeprecatedVendors = false;
 if (array_key_exists('vendor_includes', $ini['project'])) {
-    Output::printLightRed("Your configuration file is using vendor_includes, which has been deprecated in version 1.2.0 and will be removed moving forward. Please move to using vendor_excludes instead.\n\n");
+    Output::Warning("Your configuration file is using vendor_includes, which has been deprecated in version 1.2.0 and will be removed moving forward. Please move to using vendor_excludes instead.");
     $useDeprecatedVendors = true;
 }
 
@@ -135,7 +152,7 @@ if ($useDeprecatedVendors) {
     foreach (explode(',', $ini['project']['vendor_includes']) as $viItem) {
         if (!empty($viItem)) {
             $vendorIncludes[] = $viItem;
-            print("Vendor directory $viItem will be included.\n");
+            Output::Message("Vendor directory $viItem will be included.\n");
         }
     }
     print "\n";
@@ -144,11 +161,10 @@ if ($useDeprecatedVendors) {
     foreach (explode(',', $vendorExcludesString) as $veItem) {
         if (!empty($veItem)) {
             $vendorExcludes[] = $veItem;
-            print("Vendor directory $veItem will be excluded.\n");
+            Output::Message("Vendor directory $veItem will be excluded.\n");
         }
     }
 }
-print "\n";
 
 
 $composerPath = __DIR__.'/composer.phar';
@@ -162,7 +178,7 @@ if (!file_exists($composerPath)) {
 $composerConfig = json_decode(file_get_contents($composerJsonPath.'composer.json'),true);
 
 if ($update) {
-    Output::printLightGreen("Upgrading Composer if available:\n");
+    Output::Heading("Upgrading Composer if available:\n");
     echo shell_exec('php "' . $composerPath . '" --working-dir "' . $composerJsonPath . '" self-update');
 }
 
@@ -170,14 +186,12 @@ if ($update) {
 $output = shell_exec('php "'.$composerPath.'" --working-dir "'.$composerJsonPath.'" -V');
 $output = substr($output, strlen('Composer version '));
 $composerVersion = substr($output, 0, strpos($output, ' '));
-echo "Currently using version ".$composerVersion." of Composer.\n";
-print "\n";
+Output::Info("Currently using version ".$composerVersion." of Composer.");
 
 if ($update) {
-    Output::printLightGreen("Upgrading and installing from Composer:\n");
+    Output::Heading("Upgrading and installing from Composer:\n");
     echo shell_exec('php "' . $composerPath . '" --working-dir "' . $composerJsonPath . '" u');
     echo shell_exec('php "' . $composerPath . '" --working-dir "' . $composerJsonPath . '" i');
-    print "\n";
 }
 
 
@@ -185,7 +199,7 @@ if ($update) {
 /**
  * Setup Composer autloads for this project
  */
-Output::printLightGreen("Setting up project to support autoload through Composer:\n");
+Output::Heading("Setting up project to support autoload through Composer:\n");
 if (!isset($composerConfig['autoload']['psr-4'])) {
     Output::dieMsg('You must have setup autoload/psr-4 section of your composer.json to support autoloading. Please fix before continuing.');
 }
@@ -256,15 +270,15 @@ function getNewVersion($composerVersion) {
         if (hasArgument('init')) {
             $v = '0.0.1.0';
         }
-        Output::printLightCyan("Using $v as new version number\n");
+        Output::Info("Using $v as new version number\n");
     } else {
 
         $v = getCurrentVersion();
         if ($v === null) {
             $v = "1.0.0";
-            Output::printLightCyan("Unable to determine current version. Using $v\n");
+            Output::Info("Unable to determine current version. Using $v\n");
         } else {
-            Output::printLightCyan("Current version is $v\n");
+            Output::Info("Current version is $v\n");
         }
 
     }
@@ -278,7 +292,7 @@ function getNewVersion($composerVersion) {
 
     $v .= "-composer".str_replace('.','_', $composerVersion);
 
-    Output::printLightCyan("New version being set to $v\n");
+    Output::Info("New version being set to $v\n");
 
     return $v;
 }
@@ -334,7 +348,7 @@ $copyRoot = $projectDirectory . "/build";
 
 $fullPath = $buildRoot . "/" . $project . ".phar";
 
-Output::printLightGreen("\nFinalizing Output:\n");
+Output::Heading("\nFinalizing Output:\n");
 $v = getNewVersion($composerVersion);
 setNewVersion($v);
 
@@ -365,7 +379,7 @@ if (!WINDOWS_SERVER) {
     exec("mkdir \"$buildRoot\"", $lines, $deleteError);
 }
 if ($deleteError) {
-    echo 'file delete error';
+    Output::Error('File Deletion Error');
 }
 //if (is_dir($buildRoot)) {
 //    PharUtilities::DeleteDirectoryAndContents($buildRoot);
@@ -377,7 +391,7 @@ if ($deleteError) {
 
 if ($doPhar) {
 
-    echo "Building PHAR file...\n";
+    Output::Heading('Building PHAR file:');
 
     $phar = new Phar(
         $fullPath,
@@ -447,17 +461,11 @@ if ($doPhar) {
             }
 
             if (!$inc) {
-                if ($verbose) {
-                    echo 'Vendor exclusion: ' . $dispFile . "\n";
-                }
+                Output::Verbose('Vendor exclusion: ' . $dispFile, $verbose);
                 return false;
             }
 
         }
-
-
-        //echo "Including: $dispFile\n";
-
 
         Output::Verbose('Including: ' . $dispFile, $verbose);
         return true;
@@ -478,18 +486,15 @@ if ($doPhar) {
 
     copy($srcRoot . "/config.ini", $buildRoot . "/" . $project . ".config.ini");
 
-    Output::printLightCyan("PHAR file created as " . $buildRoot . "/" . $project . ".phar");
-    echo "\n";
+    Output::Info("PHAR file created as " . $buildRoot . "/" . $project . ".phar");
 
     copy($buildRoot . "/" . $project . ".phar", $buildRoot . "/" . $project . ".ext");
-    Output::printLightCyan("PHAR file copied as .ext");
+    Output::Info("PHAR file copied as .ext\n");
 
     $htaccess = 'AddHandler application/x-httpd-php .phar .ext .php';
     writeToFile($buildRoot . '/.htaccess', $htaccess);
 
     //PharUtilities::CleanUp($srcRoot);
-
-    echo "\n";
 
 }
 
@@ -506,7 +511,6 @@ if ($doManual) {
         }
     }
 
-    //echo "Copying specified files over manually:\n";
     Output::Verbose('Copying the following files to build directory:', $verbose);
 
     $dir = new RecursiveDirectoryIterator($srcRoot, FilesystemIterator::SKIP_DOTS);
@@ -521,6 +525,8 @@ if ($doManual) {
             //$include = false;
             foreach ($manualCopies as $manualDir) {
 
+//Output::Warning($manualDir);
+
                 $manualDir = strtolower($manualDir);
                 if (strPos($lcfile, $manualDir) !== false) {
 
@@ -534,7 +540,6 @@ if ($doManual) {
                             continue;
                         }
                         Output::Verbose("\t\t$file", $verbose);
-                        //echo "\t\t\t".$srcRoot."/".$file, $copyRoot."/".$lcfile."\n";
 
                         $copyDir = $copyRoot.DIRECTORY_SEPARATOR.$lcfile;
                         if (!file_exists($copyDir)) {
@@ -550,10 +555,24 @@ if ($doManual) {
                     break;
                 }
 
+
+
             }
         }
 
+
+
         //var_dump($fileinfo->getFilename());
+    }
+
+    if ($includePharInCopiedFolders) {
+        foreach ($manualCopies as $manualDir) {
+            $src = $buildRoot . "/" . $project . ".phar";
+            $dest = $copyRoot.DIRECTORY_SEPARATOR.$manualDir.DIRECTORY_SEPARATOR.$project.'.phar';
+            copy($src, $dest);
+            Output::Info('Copied PHAR to manually copied directory '.$manualDir);
+        }
+
     }
 
     // Copy version file in
@@ -561,11 +580,10 @@ if ($doManual) {
 
 }
 
-echo "\n";
-Output::printLightGreen("PHAR creation process completed!\n\n");
+Output::Success("PHAR creation process completed!");
 
 
-Output::PrintHeading("Creating local composer project:");
+Output::Heading("Create local composer project:");
 $composerJsonFilePath = $composerJsonPath . 'composer.json';
 if (!file_exists($composerJsonFilePath)) {
     Output::Warning("Composer JSON file does not exist for this project. Skipping this step.");
@@ -573,5 +591,5 @@ if (!file_exists($composerJsonFilePath)) {
 } else {
     $cp = new ComposerProject($composerJsonFilePath);
     $cp_v = $cp->UpdateVersion($v);
-    Output::PrintLine("Composer project updated as version $cp_v");
+    Output::Message("Composer project updated as version $cp_v");
 }
