@@ -9,10 +9,13 @@ use rei\CreatePhar\Output;
 require_once('ComposerProject.php');
 
 // Settings
-$_createPharVersion = '1.3.8';
+$_createPharVersion = '1.3.9';
 $showColors = true;
 
 /**
+ * Version 1.3.9
+ *      - .htaccess built now denies requests to .INI files
+ *      - phar_in_manual_copies will now also copy the .htaccess from the root, into the manually copied folders
  * Version 1.3.8
  *      - Updates to output
  *      - Warning will be output with manual_copy_files value is set (which is not supported)
@@ -491,7 +494,9 @@ if ($doPhar) {
     copy($buildRoot . "/" . $project . ".phar", $buildRoot . "/" . $project . ".ext");
     Output::Info("PHAR file copied as .ext\n");
 
-    $htaccess = 'AddHandler application/x-httpd-php .phar .ext .php';
+    $htaccess = "AddHandler application/x-httpd-php .phar .ext .php\n\n";
+    // Deny access to INI files
+    $htaccess .= "<Files ~ \"(.ini)\">\n\tOrder allow,deny\n\tDeny from all\n</Files>\n";
     writeToFile($buildRoot . '/.htaccess', $htaccess);
 
     //PharUtilities::CleanUp($srcRoot);
@@ -570,7 +575,14 @@ if ($doManual) {
             $src = $buildRoot . "/" . $project . ".phar";
             $dest = $copyRoot.DIRECTORY_SEPARATOR.$manualDir.DIRECTORY_SEPARATOR.$project.'.phar';
             copy($src, $dest);
-            Output::Info('Copied PHAR to manually copied directory '.$manualDir);
+
+            $add = '';
+            if (!file_exists($copyRoot.DIRECTORY_SEPARATOR.$manualDir.DIRECTORY_SEPARATOR.'.htaccess')) {
+                copy($buildRoot.'/.htaccess', $copyRoot.DIRECTORY_SEPARATOR.$manualDir.DIRECTORY_SEPARATOR.'.htaccess');
+                $add = ' and .htaccess';
+            }
+
+            Output::Info('Copied PHAR'.$add.' to manually copied directory '.$manualDir);
         }
 
     }
