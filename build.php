@@ -9,10 +9,12 @@ use rei\CreatePhar\Output;
 require_once('ComposerProject.php');
 
 // Settings
-$_createPharVersion = '1.3.9';
+$_createPharVersion = '1.3.10';
 $showColors = true;
 
 /**
+ * Version 1.3.10
+ *      - Fixed output errors preventing 'init'
  * Version 1.3.9
  *      - .htaccess built now denies requests to .INI files
  *      - phar_in_manual_copies will now also copy the .htaccess from the root, into the manually copied folders
