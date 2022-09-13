@@ -9,10 +9,18 @@ use rei\CreatePhar\Output;
 require_once('ComposerProject.php');
 
 // Settings
-$_createPharVersion = '1.3.5';
+$_createPharVersion = '1.3.6';
 $showColors = true;
 
 /**
+ * Version 1.3.6
+ *      - Removed Output::dieMsg() function. Use Output::Error() instead.
+ *      - Added Output::Success() function that has the option to exit the application flow after output.
+ *      - Missing manual_copy_files and vendor_excludes configuration values no longer through PHP errors.
+ *      - Added 'fix-psr' command.
+ *      - Output various messaging.
+ *      - Added getArgument($index) to root build.php file.
+ *      - By default, missing files that are being written to will now be created.
  * Version 1.3.5
  *      - Adjusted shell_exec commands to better support spaces in directory names
  *      - Check for phar.readonly setting initially, and exit if failure
@@ -82,14 +90,20 @@ if (hasArgument('init')) {
 
 /*--- Check php.ini settings ---*/
 if(ini_get('phar.readonly') == true) {
-    Output::dieMsg('php.ini file needs the value for "phar.readonly" set to "Off". Your current php.ini is located at: '.php_ini_loaded_file());
+    Output::Error('php.ini file needs the value for "phar.readonly" set to "Off". Your current php.ini is located at: '.php_ini_loaded_file());
 }
+
+
+
+
+
+
 
 
 /*--- Config settings ---*/
 Output::printLightGreen("Configuration settings:\n");
 if (!file_exists($configIniPath)) {
-    Output::Warning('This project may not have initialized. To setup a project at this location, run the command \'create-phar init\'');
+    Output::Warning('This project may not have initialized. To setup a project at this location, run the command "create-phar init".');
     Output::Error('Exiting... cannot find configuration file at path '.$configIniPath);
 }
 Output::PrintLine('Project directory: '.$projectDirectory);
@@ -115,7 +129,7 @@ $ini = parse_ini_file($configIniPath,true);
 $project = $ini['project']['name'];
 $excludeDirectories = explode(",", $ini['project']['exclude_directories']);
 $manualCopies = explode(",", $ini['project']['manual_copies']);
-$manualCopyFiles = explode(",", $ini['project']['manual_copy_files']);
+$manualCopyFiles = array_key_exists('manual_copy_files', $ini['project']) ? explode(",", $ini['project']['manual_copy_files']) : null;
 
 $useDeprecatedVendors = false;
 if (array_key_exists('vendor_includes', $ini['project'])) {
@@ -135,7 +149,7 @@ if ($useDeprecatedVendors) {
     }
     print "\n";
 } else {
-    $vendorExcludesString = $ini['project']['vendor_excludes'];
+    $vendorExcludesString = array_key_exists('vendor_excludes', $ini['project']) ? $ini['project']['vendor_excludes'] : null;
     foreach (explode(',', $vendorExcludesString) as $veItem) {
         if (!empty($veItem)) {
             $vendorExcludes[] = $veItem;
@@ -150,11 +164,44 @@ $composerPath = __DIR__.'/composer.phar';
 $composerJsonPath = $projectDirectory.'/src/php/';
 
 if (!file_exists($composerPath)) {
-    Output::dieMsg("\tCannot find composer.phar file at ".$composerPath);
+    Output::Error("\tCannot find composer.phar file at ".$composerPath);
 } elseif (!file_exists($composerJsonPath.'composer.json')) {
-    Output::dieMsg("\tCannot find composer.json file at ".$composerJsonPath."composer.json");
+    Output::Error("\tCannot find composer.json file at ".$composerJsonPath."composer.json");
 }
 $composerConfig = json_decode(file_get_contents($composerJsonPath.'composer.json'),true);
+
+
+
+if (hasArgument('fix-psr')) {
+
+//    "autoload": {
+//        "psr-4": {
+//            "rei\\PHPEmails\\": ""
+//        }
+//    },
+
+    if (array_key_exists('autoload', $composerConfig)) {
+        Output::Error('There is already an autoload section defined in your composer.json file.');
+    }
+
+    $newNamespace = getArgument(1);
+    if (str_starts_with($newNamespace, '\\')) {
+        $newNamespace = substr($newNamespace, 1);
+    }
+    if (!str_ends_with($newNamespace, '\\')) {
+        $newNamespace = $newNamespace . '\\';
+    }
+
+    $composerConfig['autoload'] = array();
+    $composerConfig['autoload']['psr-4'] = array();
+    $composerConfig['autoload']['psr-4'][$newNamespace] = "";
+    file_put_contents($composerJsonPath.'composer.json', json_encode($composerConfig));
+
+    Output::Success("Updated PSR-4 autoload settings to have namespace ".$newNamespace.'. Run create-phar again to build the project.');
+
+}
+
+
 
 if ($update) {
     Output::printLightGreen("Upgrading Composer if available:\n");
@@ -182,10 +229,10 @@ if ($update) {
  */
 Output::printLightGreen("Setting up project to support autoload through Composer:\n");
 if (!isset($composerConfig['autoload']['psr-4'])) {
-    Output::dieMsg('You must have setup autoload/psr-4 section of your composer.json to support autoloading. Please fix before continuing.');
+    Output::Error('You must have setup autoload/psr-4 section of your composer.json to support autoloading. Please fix before continuing. You can add this with the command "create-phar fix-psr namespace", replacing "namespace" with your root namespace.');
 }
 
-echo shell_exec('php "'.$composerPath.'" --working-dir "'.$composerJsonPath.'" dump-autoload -o');
+echo shell_exec('php "'.$composerPath.'" --working-dir="'.$composerJsonPath.'" dump-autoload -o');
 $namespace = array_keys($composerConfig['autoload']['psr-4'])[0];
 
 
@@ -207,6 +254,15 @@ function hasArgument($argCheck) {
     return false;
 }
 
+function getArgument($index) {
+    global $argv;
+    if ($argv === null) { return null; }
+    if ($index > count($argv)) {
+        return null;
+    }
+    return $argv[$index];
+}
+
 function getCurrentVersion() {
     global $projectDirectory;
     if (!file_exists($projectDirectory.'/version.txt')) {
@@ -220,9 +276,11 @@ function getCurrentVersion() {
     return $fgc;
 }
 
-function writeToFile($file, $content) {
+function writeToFile($file, $content, $createIfNotExist = true) {
     if (!file_exists($file)) {
-        Output::dieMsg('File '.$file.' does not exist. Please create an empty file there first.');
+        if (!$createIfNotExist) {
+            Output::Error('File ' . $file . ' does not exist. Please create an empty file there first.');
+        }
     }
     file_put_contents($file, $content);
 }
@@ -481,6 +539,10 @@ if ($doPhar) {
 
     copy($buildRoot . "/" . $project . ".phar", $buildRoot . "/" . $project . ".ext");
     Output::printLightCyan("PHAR file copied as .ext");
+
+
+    copy($buildRoot . "/" . $project . ".phar", $buildRoot . "/" . $project . ".php");
+    Output::printLightCyan("PHAR file copied as .php");
 
     //PharUtilities::CleanUp($srcRoot);
 

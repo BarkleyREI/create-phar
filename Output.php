@@ -8,8 +8,10 @@ class Output {
     private const _lightGreen = '1;32';
     private const _lightCyan = '1;36';
     private const _yellow = '1;33';
+    private const _brightGreen = '1;92';
 
     // more colors: http://blog.lenss.nl/2012/05/adding-colors-to-php-cli-script-output/
+    // https://docs.microsoft.com/en-us/windows/console/console-virtual-terminal-sequences
     public static function colorString($str, $colorCode) {
         global $showColors;
         if ($showColors) {
@@ -35,9 +37,9 @@ class Output {
      * Outputs a message about halting the process, and calls die(), ending execution.
      * @param $str
      */
-    public static function dieMsg($str) {
-        die(self::colorString($str.self::_lineBreak.self::_lineBreak, '1;31'));
-    }
+//    public static function dieMsg($str) {
+//        die(self::colorString($str.self::_lineBreak.self::_lineBreak, '1;31'));
+//    }
 
     public static function Warning($str) {
         self::printColor($str.self::_lineBreak, '1;33');
@@ -55,6 +57,10 @@ class Output {
         } else {
             echo $str;
         }
+    }
+    public static function Success($str = '', $exit = true) {
+        echo self::colorString($str, self::_brightGreen);
+        if ($exit) { exit(); }
     }
     public static function PrintLine($str = ''){
         echo $str.self::_lineBreak;
