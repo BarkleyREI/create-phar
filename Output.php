@@ -6,8 +6,9 @@ class Output {
 
     private const _lineBreak = "\n";
     private const _lightGreen = '1;32';
-    private const _lightCyan = '1;36';
     private const _yellow = '1;33';
+    private const _blue = '1;34';
+    private const _lightCyan = '1;36';
     private const _brightGreen = '1;92';
 
 //$codes=[
@@ -94,7 +95,7 @@ class Output {
         echo self::_lineBreak.self::colorString($str,self::_lightGreen).self::_lineBreak;
     }
     public static function Success($str) {
-        echo self::colorString("🆗 ".$str,self::_lightGreen).self::_lineBreak;
+        echo self::colorString("🆗 ".$str,self::_blue).self::_lineBreak;
     }
     private static function _RemoveLineBreaks($str) {
         $str = str_replace("\n", "", $str);

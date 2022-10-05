@@ -7,18 +7,25 @@ error_reporting(E_ALL);
 use rei\CreatePhar\Output;
 
 require_once('ComposerProject.php');
+require_once('Validation.php');
 
 // Settings
-$_createPharVersion = '1.3.11';
+$_createPharVersion = '1.3.12';
 $showColors = true;
 
 /**
+ * Version 1.3.12
+ *      - Bugfix for the "There are no commands defined..." message when running with the -u flag
+ *      - Refactoring begun for validations and fixes. Validation+Fix added to build process.
+ *      - Added validation to ensure local composer repositories don't use symlinks.
+ *      - Added validation to ensure that an index.php exists in the root of the project.
+ *      - Updated various messaging.
  * Version 1.3.11
  *		- Removed Output::dieMsg() function. Use Output::Error() instead.
  *      - Added Output::SuccessEnd() function that has the option to exit the application flow after output.
  *      - Missing manual_copy_files and vendor_excludes configuration values no longer through PHP errors.
  *      - Added 'fix-psr' command.
- *      - Output various messaging.
+ *      - Updated various messaging.
  *      - Added getArgument($index) to root build.php file.
  *      - By default, missing files that are being written to will now be created.
  * Version 1.3.10
@@ -223,12 +230,39 @@ if (hasArgument('fix-psr')) {
 
 
 
+Output::Heading('Performing Validations');
+$performFixes = true;
+$validation = new Validation($projectDirectory.'/src/php', $performFixes);
+$valid = $validation->Validate();
+$errors = $validation->GetErrorMessages();
+if (count($errors) > 0) {
+    Output::Error('The following validation errors have been found: ', false);
+    foreach ($errors as $error) {
+        Output::Error($error, false);
+    }
+    if ($valid && $performFixes) {
+        Output::Success('These errors have all been fixed.');
+    } elseif (!$valid && $performFixes) {
+        Output::Warning('Not all of these errors have been able to be fixed. Rerun the build process to list all remaining validation errors.');
+    }
+} else {
+    Output::Success('No validation errors have been found.');
+}
+if (!$valid) {
+    Output::Error('Exiting build process due to failed validations.');
+}
+
+
+
+
+
 if ($update) {
     Output::Heading("Upgrading Composer if available:\n");
-    echo shell_exec('php "' . $composerPath . '" --working-dir "' . $composerJsonPath . '" self-update');
+    echo shell_exec('php "' . $composerPath . '" --working-dir="' . $composerJsonPath . '" self-update');
 }
 
 // Get composer version
+Output::Heading('Composer Info');
 $output = shell_exec('php "'.$composerPath.'" --working-dir "'.$composerJsonPath.'" -V');
 $output = substr($output, strlen('Composer version '));
 $composerVersion = substr($output, 0, strpos($output, ' '));
@@ -236,8 +270,8 @@ Output::Info("Currently using version ".$composerVersion." of Composer.");
 
 if ($update) {
     Output::Heading("Upgrading and installing from Composer:\n");
-    echo shell_exec('php "' . $composerPath . '" --working-dir "' . $composerJsonPath . '" u');
-    echo shell_exec('php "' . $composerPath . '" --working-dir "' . $composerJsonPath . '" i');
+    echo shell_exec('php "' . $composerPath . '" --working-dir="' . $composerJsonPath . '" u');
+    echo shell_exec('php "' . $composerPath . '" --working-dir="' . $composerJsonPath . '" i');
 }
 
 
