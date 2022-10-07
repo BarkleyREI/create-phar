@@ -38,21 +38,21 @@ class Initialize {
         Output::Message('Add non-built views into .'.$ds.'src'.$ds.'php'.$ds.'Views'.$ds);
 
         // Add initial config
-        $config = file_get_contents(__DIR__.$ds.'init-config.ini');
+        $config = file_get_contents(__DIR__.$ds.'templates'.$ds.'config.ini');
         $config = str_replace('{project}', $this->_projectName, $config);
         $file = $ds.'src'.$ds.'php'.$ds.'config.ini';
         file_put_contents($this->_projectDirectory.$file, $config);
         Output::Message('Initial config file created at .'.$file);
 
         // Add initial composer.json
-        $config = file_get_contents(__DIR__.$ds.'init-composer.json');
+        $config = file_get_contents(__DIR__.$ds.'templates'.$ds.'composer.json');
         $config = str_replace('{project}', $this->_projectName, $config);
         $config = str_replace('{namespace}', $this->_namespace, $config);
         $file = $ds.'src'.$ds.'php'.$ds.'composer.json';
         file_put_contents($this->_projectDirectory.$file, $config);
         Output::Message('Initial composer.json file create at .'.$file);
 
-        $config = file_get_contents(__DIR__.$ds.'init-index.php');
+        $config = file_get_contents(__DIR__.$ds.'templates'.$ds.'index.php');
         $file = $ds.'src'.$ds.'php'.$ds.'index.php';
         file_put_contents($this->_projectDirectory.$file, $config);
         Output::Message('Initial index file created at .'.$file);
@@ -65,6 +65,12 @@ class Initialize {
         mkdir($this->_projectDirectory.$ds.'build');
         file_put_contents($this->_projectDirectory.$ds.'build'.$ds.'version.txt', '0.0.1.0');
         Output::Message('Builds will be placed at .'.$ds.'build'.$ds.' with an initial version number of 0.0.1.0');
+
+        // Copy Lando Init file
+        $fc = file_get_contents(__DIR__.$ds.'templates'.$ds.'.lando.yml');
+        $fc = str_replace('{project}', $this->_projectName, $fc);
+        file_put_contents($this->_projectDirectory.$ds.'.lando.yml', $fc);
+        Output::Message('Added basic Lando config file that serves files from the built \'views\' directory. Run command \'lando start\' to initialize Lando from the root.');
 
         Output::Info('Initialization complete. To build the project run \'create-phar\' from this root directory.');
         Output::Info('Running initial build...');

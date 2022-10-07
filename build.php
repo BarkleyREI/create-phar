@@ -10,10 +10,15 @@ require_once('ComposerProject.php');
 require_once('Validation.php');
 
 // Settings
-$_createPharVersion = '1.3.12';
+$_createPharVersion = '1.3.13';
 $showColors = true;
 
 /**
+ * Version 1.3.13
+ *      - Moved phar.readonly check prior to init
+ *      - /templates directory now houses all default files
+ *      - Added a basic .lando.yml to be copied on init
+ *      - Removed satis config, as it's no longer being used.
  * Version 1.3.12
  *      - Bugfix for the "There are no commands defined..." message when running with the -u flag
  *      - Refactoring begun for validations and fixes. Validation+Fix added to build process.
@@ -102,6 +107,12 @@ $update = hasArgument('-u');
 /*--- Initial Output ---*/
 Output::Heading('Running create-phar version '.$_createPharVersion);
 
+/*--- Check php.ini settings ---*/
+if(ini_get('phar.readonly') == true) {
+    Output::Error('php.ini file needs the value for "phar.readonly" set to "Off". Your current php.ini is located at: '.php_ini_loaded_file());
+}
+
+/**--- Initialize if requested ---*/
 if (hasArgument('init')) {
     include(__DIR__.'/Initialize.php');
     $init = new \rei\CreatePhar\Initialize($projectDirectory);
@@ -109,10 +120,7 @@ if (hasArgument('init')) {
 }
 
 
-/*--- Check php.ini settings ---*/
-if(ini_get('phar.readonly') == true) {
-    Output::Error('php.ini file needs the value for "phar.readonly" set to "Off". Your current php.ini is located at: '.php_ini_loaded_file());
-}
+
 
 
 
@@ -585,10 +593,8 @@ if ($doPhar) {
     copy($buildRoot . "/" . $project . ".phar", $buildRoot . "/" . $project . ".ext");
     Output::Info("PHAR file copied as .ext\n");
 
-    $htaccess = "AddHandler application/x-httpd-php .phar .ext .php\n\n";
-    // Deny access to INI files
-    $htaccess .= "<Files ~ \"(.ini)\">\n\tOrder allow,deny\n\tDeny from all\n</Files>\n";
-    writeToFile($buildRoot . '/.htaccess', $htaccess);
+    // Copy .htaccess file
+    writeToFile($buildRoot . '/.htaccess', file_get_contents(__DIR__.DIRECTORY_SEPARATOR.'templates'.DIRECTORY_SEPARATOR.'.htaccess'));
 
     //PharUtilities::CleanUp($srcRoot);
 
