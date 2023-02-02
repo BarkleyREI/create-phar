@@ -16,16 +16,21 @@ in your system's terminal.
 ## Project Initialization
 
 To initialize a new project, create an empty directory for it, and within it
-run the command _create-phar init_.
+run the command `create-phar init`.
 
 The project will be named and namespaced based on the current directory. For 
-example, if you run _create-phar init_ in the directory _c:\\TestProject\\_, 
-your project will have the name _estproject_ and be in the namespace 
+example, if you run `create-phar init` in the directory _c:\\TestProject\\_, 
+your project will have the name _Testproject_ and be in the namespace 
 _rei\TestProject_.
 
 ## Project Build
 
-To build projects after initialization, simply run the command _create-phar_.
+To build projects after initialization, simply run the command `create-phar` within the project directory.
 
 If you want to change the version number for the project, run the command
-followed by the new version number. For example _create-phar 1.2.4_
+followed by the new version number. For example `create-phar 1.2.4`.
+
+## Run Flags
+
+- `-v` - Runs in verbose mode, providing more output during the build process.
+- `-u` - Updates Composer and dependencies. By default, running a build does not update these items.
