@@ -10,10 +10,14 @@ require_once('ComposerProject.php');
 require_once('Validation.php');
 
 // Settings
-$_createPharVersion = '1.3.13';
+$_createPharVersion = '1.3.14';
 $showColors = true;
 
 /**
+ * Version 1.3.14
+ * 		- Verbose (-v) output now lists out all excluded directories and copied directories
+ *		- .idea directory always added as an excluded directory
+ *		- Bugfix for excluded directories caused by mismatched directory indicators
  * Version 1.3.13
  *      - Moved phar.readonly check prior to init
  *      - /templates directory now houses all default files
@@ -157,7 +161,21 @@ if ($update) {
 $ini = parse_ini_file($configIniPath,true);
 $project = $ini['project']['name'];
 $excludeDirectories = explode(",", $ini['project']['exclude_directories']);
+$excludeDirectories[] = '.idea';
+if ($verbose) {
+	Output::Verbose('Excluding the following directories:');
+	foreach ($excludeDirectories as $exDir) {
+		Output::Verbose("\t$exDir");
+	}
+}
+
 $manualCopies = explode(",", $ini['project']['manual_copies']);
+if ($verbose) {
+	Output::Verbose('Manual copies are as follows:');
+	foreach ($manualCopies as $mCopy) {
+		Output::Verbose("\t$mCopy");
+	}
+}
 
 $manualCopyFiles = isset($ini['project']['manual_copy_files']) ? explode(",", $ini['project']['manual_copy_files']) : array();
 if (count($manualCopyFiles) > 0) {
@@ -517,11 +535,12 @@ if ($doPhar) {
 
         global $excludeDirectories, $vendorIncludes, $vendorExcludes, $useDeprecatedVendors, $verbose;
 
-//        if (PharUtilities::IsPhar($file)) {
-//            return false;
-//        }
-
         $lcFile = strtolower($file);
+
+		// Fix directory slashes to keep consistent
+		$lcFile = str_replace("/", DIRECTORY_SEPARATOR, $lcFile);
+		$lcFile = str_replace("\\", DIRECTORY_SEPARATOR, $lcFile);
+
         $dispFile = $lcFile;
         $maxDispLength = 40;
         if (strlen($dispFile) > ($maxDispLength + 3)) {
@@ -532,7 +551,7 @@ if ($doPhar) {
 
             $exDir = strtolower($exDir);
 
-            if (strPos($lcFile, "/$exDir/") !== false) {
+            if (strPos($lcFile, DIRECTORY_SEPARATOR."$exDir".DIRECTORY_SEPARATOR) !== false) {
                 Output::Verbose("Exclusion: Match on /$exDir/ to $dispFile", $verbose);
                 return false;
             } elseif (strPos($lcFile, "/$exDir/") !== false) {
