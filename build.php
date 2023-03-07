@@ -10,10 +10,12 @@ require_once('ComposerProject.php');
 require_once('Validation.php');
 
 // Settings
-$_createPharVersion = '1.3.14';
+$_createPharVersion = '1.3.15';
 $showColors = true;
 
 /**
+ * Version 1.3.15
+ * 		- On upgrading Composer dependencies, installed versions will be output.
  * Version 1.3.14
  * 		- Verbose (-v) output now lists out all excluded directories and copied directories
  *		- .idea directory always added as an excluded directory
@@ -105,6 +107,8 @@ array_shift($argv);
 /*--- Variable setup --*/
 $projectDirectory = getcwd(); // directory that the project is running from
 $configIniPath = $projectDirectory.'/src/php/config.ini';   // project config file
+
+/*-- Arguments --*/
 $verbose = hasArgument('-v');
 $update = hasArgument('-u');
 
@@ -298,6 +302,9 @@ if ($update) {
     Output::Heading("Upgrading and installing from Composer:\n");
     echo shell_exec('php "' . $composerPath . '" --working-dir="' . $composerJsonPath . '" u');
     echo shell_exec('php "' . $composerPath . '" --working-dir="' . $composerJsonPath . '" i');
+
+	Output::Heading('Installed Composer Projects:');
+	echo shell_exec('php "' . $composerPath . '" --working-dir="' . $composerJsonPath . '" show');
 }
 
 
