@@ -10,92 +10,11 @@ require_once('ComposerProject.php');
 require_once('Validation.php');
 
 // Settings
-$_createPharVersion = '1.3.15';
+$_createPharVersion = '1.3.16';
 $showColors = true;
 
 /**
- * Version 1.3.15
- * 		- On upgrading Composer dependencies, installed versions will be output.
- * Version 1.3.14
- * 		- Verbose (-v) output now lists out all excluded directories and copied directories
- *		- .idea directory always added as an excluded directory
- *		- Bugfix for excluded directories caused by mismatched directory indicators
- * Version 1.3.13
- *      - Moved phar.readonly check prior to init
- *      - /templates directory now houses all default files
- *      - Added a basic .lando.yml to be copied on init
- *      - Removed satis config, as it's no longer being used.
- * Version 1.3.12
- *      - Bugfix for the "There are no commands defined..." message when running with the -u flag
- *      - Refactoring begun for validations and fixes. Validation+Fix added to build process.
- *      - Added validation to ensure local composer repositories don't use symlinks.
- *      - Added validation to ensure that an index.php exists in the root of the project.
- *      - Updated various messaging.
- * Version 1.3.11
- *		- Removed Output::dieMsg() function. Use Output::Error() instead.
- *      - Added Output::SuccessEnd() function that has the option to exit the application flow after output.
- *      - Missing manual_copy_files and vendor_excludes configuration values no longer through PHP errors.
- *      - Added 'fix-psr' command.
- *      - Updated various messaging.
- *      - Added getArgument($index) to root build.php file.
- *      - By default, missing files that are being written to will now be created.
- * Version 1.3.10
- *      - Fixed output errors preventing 'init'
- * Version 1.3.9
- *      - .htaccess built now denies requests to .INI files
- *      - phar_in_manual_copies will now also copy the .htaccess from the root, into the manually copied folders
- * Version 1.3.8
- *      - Updates to output
- *      - Warning will be output with manual_copy_files value is set (which is not supported)
- *      - Added phar_in_manual_copies config value, which copies the build phar file into the manually copied folders
- * Version 1.3.7
- *      - Fixed an issue with composer dump-autoload
- * Version 1.3.6
- *      - writeToFile(...) now creates a file if it doesn't exist
- *      - Build adds a .htaccess file to send phar and ext files to the PHP interpreter
- * Version 1.3.5
- *      - Adjusted shell_exec commands to better support spaces in directory names
- *      - Check for phar.readonly setting initially, and exit if failure
- * Version 1.3.4
- *      - Updates the version number in the project's composer.json to support local repository references
- *      - Updated composer (for builds) to 2.1.6
- * Version 1.3.3
- * 		- Support for running on Macs
- * Version 1.3.2
- *      - Adding verbose option with -v
- *      - Adding update option with -u
- *      - Subdirectory files under copied files will become lowercase
- * Version 1.3.1
- *      - Added creation of index file
- *      - Will attempt to update Composer
- *      - Automated version will now include Composer version as well
- * Version 1.3.0
- *      - Moving to self-contained project (refactoring included)
- *      - Additional build output
- *      - 'init' argument will now build out an initial, blank project
- * Version 1.2.2
- *      - Created version file will now use namespace defined in for PSR-4 autloading in composer.json
- * Version 1.2.1
- * 		- Updated output to flow better
- * 		- Will verify configuration settings for autoloading are set, and fail otherwise.
- * Version 1.2.0
- *      - Moved to specifying composer excludes, instead of includes.
- *      - More visible versioning
- *      - Runs composer upgrade + install prior to full build
- *      - Cleaned output
- * Version 1.1.1
- *      - Verify that project config file exists.
- *      - If version.txt file do not exist, create it
- *      - Modification/cleanup of error messages
- * Version 1.1.0
- *      - Modifications done with Feed Manager 1.3.0
- * Version 1.0.3
- *      - Composer will dump autoloads for this project
- * Version 1.0.2
- *      - Also builds with a "ext" extension, so OmniUpdate can upload it properly as a binary (see http://support.omniupdate.com/oucampus10/interface/content/binary-management.html )
- *      - Now properly excludes directories in all scenarios for build
- * Version 1.0.1 - Added ability to use manual_copy_files
- * Version 1.0.0 - Initial version
+ * View version history on GitHub: https://github.com/BarkleyREI/create-phar
  */
 
 /*--- Includes --*/
@@ -213,13 +132,15 @@ if ($useDeprecatedVendors) {
     }
     print "\n";
 } else {
-    $vendorExcludesString = array_key_exists('vendor_excludes', $ini['project']) ? $ini['project']['vendor_excludes'] : null;
-    foreach (explode(',', $vendorExcludesString) as $veItem) {
-        if (!empty($veItem)) {
-            $vendorExcludes[] = $veItem;
-            Output::Message("Vendor directory $veItem will be excluded.\n");
-        }
-    }
+    $vendorExcludesString = $ini['project']['vendor_excludes'] ?? null; // array_key_exists('vendor_excludes', $ini['project']) ?  : null;
+	if ($vendorExcludesString !== null) {
+		foreach (explode(',', $vendorExcludesString) as $veItem) {
+			if (!empty($veItem)) {
+				$vendorExcludes[] = $veItem;
+				Output::Message("Vendor directory $veItem will be excluded.\n");
+			}
+		}
+	}
 }
 
 
@@ -297,6 +218,7 @@ $output = shell_exec('php "'.$composerPath.'" --working-dir "'.$composerJsonPath
 $output = substr($output, strlen('Composer version '));
 $composerVersion = substr($output, 0, strpos($output, ' '));
 Output::Info("Currently using version ".$composerVersion." of Composer.");
+file_put_contents(__DIR__.'/composer-version.txt', $composerVersion);
 
 if ($update) {
     Output::Heading("Upgrading and installing from Composer:\n");
