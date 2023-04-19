@@ -4,13 +4,17 @@ ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
+use Barkley\CreatePhar\Utilities\Composer;
 use rei\CreatePhar\Output;
 
-require_once('ComposerProject.php');
+require_once(__DIR__.'/Utilities/Composer.php');
 require_once('Validation.php');
 
+
+
 // Settings
-$_createPharVersion = '1.3.16';
+$_createPharVersion = '1.4.0';
+$_minPhpVersion = '8.1.6';
 $showColors = true;
 
 /**
@@ -26,8 +30,81 @@ array_shift($argv);
 /*--- Variable setup --*/
 $projectDirectory = getcwd(); // directory that the project is running from
 $configIniPath = $projectDirectory.'/src/php/config.ini';   // project config file
+$composer = new Composer($projectDirectory);
 
 /*-- Arguments --*/
+if (hasArgument('-h')) {
+    Output::Heading('create-phar');
+    Output::Message('Repository is available online at https://github.com/BarkleyREI/create-phar');
+    Output::Message('This project helps manage versioning for PHP projects, by creating stand-alone distributable PHAR files.');
+
+    Output::Heading('Usage Examples');
+    Output::Define('create-phar init', 'Initializes a new project in your current directory.');
+    Output::Define('create-phar','Builds the project in your current directory, without modifying the version number.');
+    Output::Define('create-phar 1.0.0','Builds the project in your current directory, and changes the version number to 1.0.0');
+
+    Output::Heading('Flags');
+    Output::Define('-h','Help screen (what you see now)');
+    Output::Define('-v','Enables verbose output mode.');
+    Output::Define('-u','Updates all Composer dependencies during the build.');
+    Output::Define('-i','Provides information on current setup, without running the build.');
+    Output::Define('-c','Runs a command against the create-phar version of Composer (ex: create-phar -c self-update)');
+    Output::Define('-fixpsr','Setup autoload/psr-4 section of your composer.json to support auto-loading. (ex: create-phar -fixpsr namespace)');
+
+    Output::NewLine();
+    exit();
+} elseif (hasArgument('-i')) {
+    Output::Heading('Builder Information');
+    Output::Define('create-phar Version', $_createPharVersion);
+    Output::Define('create-phar Directory', __DIR__);
+    Output::Define('Composer Version', Composer::GetComposerVersion());
+    Output::Define('PHP Version', phpversion());
+
+    Output::Heading('Project Information');
+    //Output::Define('Current Version',);
+
+    Output::NewLine();
+    exit();
+} elseif (hasArgument('-c')) {
+    Output::Heading('Composer Command Run');
+    $v = getValuesFollowingArgument('-c');
+    if (empty($v)) {
+        Output::Error('Need to pass a value after -c');
+    } else {
+        $o = $composer->RunCommand($v);
+        if ($o !== null) {
+            Output::Message($o);
+        }
+    }
+    exit();
+} elseif (hasArgument('-fixpsr')) {
+
+    if ($composer->HasValue('autoload')) {
+        Output::Error('There is already an autoload section defined in your composer.json file.');
+    }
+
+    $newNamespace = getValuesFollowingArgument('-fixpsr');
+    if (empty($newNamespace)) {
+        Output::Error('You must specific the new namespace to set');
+    }
+
+    if (str_starts_with($newNamespace, '\\')) {
+        $newNamespace = substr($newNamespace, 1);
+    }
+    if (!str_ends_with($newNamespace, '\\')) {
+        $newNamespace = $newNamespace . '\\';
+    }
+
+    $composerConfig = array();
+    $composerConfig['autoload'] = array();
+    $composerConfig['autoload']['psr-4'] = array();
+    $composerConfig['autoload']['psr-4'][$newNamespace] = "";
+    $composer->AddUpdateConfig($composerConfig);
+
+    Output::SuccessEnd("Updated PSR-4 autoload settings to have namespace ".$newNamespace.'. Run create-phar again to build the project.');
+
+}
+
 $verbose = hasArgument('-v');
 $update = hasArgument('-u');
 
@@ -39,22 +116,16 @@ if(ini_get('phar.readonly') == true) {
     Output::Error('php.ini file needs the value for "phar.readonly" set to "Off". Your current php.ini is located at: '.php_ini_loaded_file());
 }
 
+if (version_compare($_minPhpVersion,phpversion(),'>')) {
+    Output::Error("create-phar has a minimum required version of $_minPhpVersion and you are running ".phpversion());
+}
+
 /**--- Initialize if requested ---*/
 if (hasArgument('init')) {
     include(__DIR__.'/Initialize.php');
     $init = new \rei\CreatePhar\Initialize($projectDirectory);
     $init->Execute();
 }
-
-
-
-
-
-
-
-
-
-
 
 /*--- Config settings ---*/
 Output::Heading("Configuration settings:\n");
@@ -73,9 +144,9 @@ if ($verbose) {
 }
 
 if ($update) {
-    Output::Message('Updating Composer and dependencies.');
+    Output::Message('Updating Composer dependencies.');
 } else {
-    Output::Message('Will not update Composer or dependencies. To do so, pass argument -u');
+    Output::Message('Will not update dependencies. To do so, pass argument -u');
 }
 
 
@@ -144,40 +215,20 @@ if ($useDeprecatedVendors) {
 }
 
 
-$composerPath = __DIR__.'/composer.phar';
-$composerJsonPath = $projectDirectory.'/src/php/';
+$composerPath = $composer->GetComposerPath();
+$composerJsonPath = $composer->GetComposerJsonPath();
 
 if (!file_exists($composerPath)) {
     Output::Error("\tCannot find composer.phar file at ".$composerPath);
-} elseif (!file_exists($composerJsonPath.'composer.json')) {
-    Output::Error("\tCannot find composer.json file at ".$composerJsonPath."composer.json");
+} elseif (!file_exists($composerJsonPath)) {
+    Output::Error("\tCannot find composer.json file at ".$composerJsonPath);
 }
-$composerConfig = json_decode(file_get_contents($composerJsonPath.'composer.json'),true);
+
+//$composerConfig = json_decode(file_get_contents($composerJsonPath),true);
 
 
 
-if (hasArgument('fix-psr')) {
 
-    if (array_key_exists('autoload', $composerConfig)) {
-        Output::Error('There is already an autoload section defined in your composer.json file.');
-    }
-
-    $newNamespace = getArgument(1);
-    if (str_starts_with($newNamespace, '\\')) {
-        $newNamespace = substr($newNamespace, 1);
-    }
-    if (!str_ends_with($newNamespace, '\\')) {
-        $newNamespace = $newNamespace . '\\';
-    }
-
-    $composerConfig['autoload'] = array();
-    $composerConfig['autoload']['psr-4'] = array();
-    $composerConfig['autoload']['psr-4'][$newNamespace] = "";
-    file_put_contents($composerJsonPath.'composer.json', json_encode($composerConfig));
-
-    Output::SuccessEnd("Updated PSR-4 autoload settings to have namespace ".$newNamespace.'. Run create-phar again to build the project.');
-
-}
 
 
 
@@ -203,22 +254,14 @@ if (!$valid) {
     Output::Error('Exiting build process due to failed validations.');
 }
 
+// Update Composer
+Output::Heading("Upgrading Composer if available:\n");
+echo $composer->SelfUpdate();
 
-
-
-
-if ($update) {
-    Output::Heading("Upgrading Composer if available:\n");
-    echo shell_exec('php "' . $composerPath . '" --working-dir="' . $composerJsonPath . '" self-update');
-}
-
-// Get composer version
+// Output information on Composer
 Output::Heading('Composer Info');
-$output = shell_exec('php "'.$composerPath.'" --working-dir "'.$composerJsonPath.'" -V');
-$output = substr($output, strlen('Composer version '));
-$composerVersion = substr($output, 0, strpos($output, ' '));
-Output::Info("Currently using version ".$composerVersion." of Composer.");
-file_put_contents(__DIR__.'/composer-version.txt', $composerVersion);
+Output::Info("Currently using version ".$composer->GetComposerVersion()." of Composer.");
+file_put_contents(__DIR__.'/composer-version.txt', $composer->GetComposerVersion());
 
 if ($update) {
     Output::Heading("Upgrading and installing from Composer:\n");
@@ -235,157 +278,14 @@ if ($update) {
  * Setup Composer autloads for this project
  */
 Output::Heading("Setting up project to support autoload through Composer:\n");
-if (!isset($composerConfig['autoload']['psr-4'])) {
-    Output::Error('You must have setup autoload/psr-4 section of your composer.json to support autoloading. Please fix before continuing. You can add this with the command "create-phar fix-psr namespace", replacing "namespace" with your root namespace.');
+
+if (!$composer->HasValue('autoload','psr-4')) {
+    Output::Error('You must have setup autoload/psr-4 section of your composer.json to support autoloading. Please fix before continuing. You can add this with the command "create-phar -fixpsr namespace", replacing "namespace" with your root namespace.');
 }
 
-echo shell_exec('php "'.$composerPath.'" --working-dir="'.$composerJsonPath.'" dump-autoload -o');
-$namespace = array_keys($composerConfig['autoload']['psr-4'])[0];
+echo $composer->RunCommand('dump-autoload -o',true);
 
-
-/**
- * Determines if a certain argument value was set
- * @param $argCheck
- * @return bool
- */
-function hasArgument($argCheck) {
-    global $argv;
-    if ($argv === null || count($argv) === 0) {
-        return false;
-    }
-    foreach ($argv as $arg) {
-        if (strtolower($arg) === strtolower($argCheck)) {
-            return true;
-        }
-    }
-    return false;
-}
-
-function getArgument($index) {
-    global $argv;
-    if ($argv === null) { return null; }
-    if ($index > count($argv)) {
-        return null;
-    }
-    return $argv[$index];
-}
-
-function getCurrentVersion() {
-    global $projectDirectory;
-    if (!file_exists($projectDirectory.'/version.txt')) {
-        file_put_contents($projectDirectory.'/version.txt', '1.0.0.0');
-        return '1.0.0.0';
-    }
-    $fgc = file_get_contents($projectDirectory.'/version.txt');
-    if ($fgc === false) {
-        return null;
-    }
-    return $fgc;
-}
-
-function writeToFile($file, $content, $createIfNotExist = true) {
-    if (!file_exists($file)) {
-        if (!$createIfNotExist) {
-            Output::Error('File ' . $file . ' does not exist. Please create an empty file there first.');
-        }
-    }
-    file_put_contents($file, $content);
-}
-
-function setNewVersion($v) {
-    global $_createPharVersion, $namespace, $projectDirectory;
-    $buildString = "Built with create-phar ($_createPharVersion) on ". date("D M d, Y G:i");
-    writeToFile($projectDirectory.'/version.txt', $v);
-    writeToFile($projectDirectory.'/src/php/Config/Version.php', "<?php /* Auto-generated from create-phar.php - Do not edit */ namespace ".$namespace."Config; class Version { public static function getBuildInfo() { return '$buildString'; } public static function getVersion() { return '$v'; } }");
-}
-
-function getNewVersion($composerVersion) {
-
-    global $argv;
-
-    $v = null;
-
-    if ($argv !== null && is_array($argv)) {
-        foreach ($argv as $arg) {
-            $p = strpos($arg, '.');
-            if ($p !== false && strpos($arg, '.', $p) !== false) {
-                $v = $arg;
-            }
-        }
-    }
-
-    if ($v !== null) {
-
-        if (hasArgument('init')) {
-            $v = '0.0.1.0';
-        }
-        Output::Info("Using $v as new version number\n");
-    } else {
-
-        $v = getCurrentVersion();
-        if ($v === null) {
-            $v = "1.0.0";
-            Output::Info("Unable to determine current version. Using $v\n");
-        } else {
-            Output::Info("Current version is $v\n");
-        }
-
-    }
-
-    if (substr_count($v, ".") > 2) {
-        $e = explode(".",$v);
-        $v = $e[0].".".$e[1].".".$e[2];
-    }
-
-    $v .= ".".time();
-
-    $v .= "-composer".str_replace('.','_', $composerVersion);
-
-    Output::Info("New version being set to $v\n");
-
-    return $v;
-}
-
-
-function custom_copy($src, $dst) {
-
-    global $verbose;
-
-    if (!is_dir($src)) {
-        copy($src, $dst);
-        return;
-    }
-
-    // open the source directory
-    $dir = opendir($src);
-
-    // Make the destination directory if not exist
-    @mkdir($dst);
-
-    // Loop through the files in source directory
-    while( $file = readdir($dir) ) {
-
-        if (( $file != '.' ) && ( $file != '..' )) {
-            if ( is_dir($src . '/' . $file) )
-            {
-
-                // Recursively calling custom copy function
-                // for sub directory
-                custom_copy($src . '/' . $file, $dst . '/' . $file);
-
-            }
-            else {
-                $source = $src . DIRECTORY_SEPARATOR . $file;
-                $destination = strtolower($dst) . DIRECTORY_SEPARATOR . strtolower($file);
-                //copy($src . '/' . $file, $dst . '/' . $file);
-                copy($source, $destination);
-                Output::Verbose('Copied '.$destination, $verbose);
-            }
-        }
-    }
-
-    closedir($dir);
-}
+$namespace = array_keys($composer->GetValue('autoload','psr-4'))[0];
 
 
 $doPhar = true;
@@ -398,7 +298,7 @@ $copyRoot = $projectDirectory . "/build";
 $fullPath = $buildRoot . "/" . $project . ".phar";
 
 Output::Heading("\nFinalizing Output:\n");
-$v = getNewVersion($composerVersion);
+$v = getNewVersion();
 setNewVersion($v);
 
 // Delete from build root
@@ -641,12 +541,180 @@ Output::Success("PHAR creation process completed!");
 
 
 Output::Heading("Create local composer project:");
-$composerJsonFilePath = $composerJsonPath . 'composer.json';
-if (!file_exists($composerJsonFilePath)) {
-    Output::Warning("Composer JSON file does not exist for this project. Skipping this step.");
-    Output::Warning($composerJsonFilePath);
-} else {
-    $cp = new ComposerProject($composerJsonFilePath);
-    $cp_v = $cp->UpdateVersion($v);
-    Output::Message("Composer project updated as version $cp_v");
+
+$cp_v = $composer->UpdateVersion($v);
+Output::Message("Composer project updated as version $cp_v");
+
+
+
+
+
+
+
+
+
+
+
+/**
+ * Determines if a certain argument value was set
+ * @param $argCheck
+ * @return bool
+ */
+function hasArgument($argCheck) {
+    global $argv;
+    if ($argv === null || count($argv) === 0) {
+        return false;
+    }
+    foreach ($argv as $arg) {
+        if (strtolower($arg) === strtolower($argCheck)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+function getValuesFollowingArgument($arg) : bool|string {
+    global $argv;
+    if (!hasArgument($arg)) {
+        return false;
+    }
+
+    for ($i = 0; $i < count($argv); $i++) {
+        $iArg = $argv[$i];
+        if (strtolower($iArg) === strtolower($arg)) {
+            if ($i >= count($argv) + 1) {
+                return false;
+            }
+            return implode(' ',array_slice($argv, $i+1));
+        }
+    }
+
+    return false;
+
+}
+
+function getArgument($index) {
+    global $argv;
+    if ($argv === null) { return null; }
+    if ($index > count($argv)) {
+        return null;
+    }
+    return $argv[$index];
+}
+
+function getCurrentVersion() {
+    global $projectDirectory;
+    if (!file_exists($projectDirectory.'/version.txt')) {
+        file_put_contents($projectDirectory.'/version.txt', '1.0.0.0');
+        return '1.0.0.0';
+    }
+    $fgc = file_get_contents($projectDirectory.'/version.txt');
+    if ($fgc === false) {
+        return null;
+    }
+    return $fgc;
+}
+
+function writeToFile($file, $content, $createIfNotExist = true) {
+    if (!file_exists($file)) {
+        if (!$createIfNotExist) {
+            Output::Error('File ' . $file . ' does not exist. Please create an empty file there first.');
+        }
+    }
+    file_put_contents($file, $content);
+}
+
+function setNewVersion($v) {
+    global $_createPharVersion, $namespace, $projectDirectory;
+    $buildString = "Built with create-phar ($_createPharVersion) on ". date("D M d, Y G:i");
+    writeToFile($projectDirectory.'/version.txt', $v);
+    writeToFile($projectDirectory.'/src/php/Config/Version.php', "<?php /* Auto-generated from create-phar.php - Do not edit */ namespace ".$namespace."Config; class Version { public static function getBuildInfo() { return '$buildString'; } public static function getVersion() { return '$v'; } }");
+}
+
+function getNewVersion() {
+
+    global $argv;
+
+    $v = null;
+
+    if ($argv !== null && is_array($argv)) {
+        foreach ($argv as $arg) {
+            $p = strpos($arg, '.');
+            if ($p !== false && strpos($arg, '.', $p) !== false) {
+                $v = $arg;
+            }
+        }
+    }
+
+    if ($v !== null) {
+
+        if (hasArgument('init')) {
+            $v = '0.0.1.0';
+        }
+        Output::Info("Using $v as new version number\n");
+    } else {
+
+        $v = getCurrentVersion();
+        if ($v === null) {
+            $v = "1.0.0";
+            Output::Info("Unable to determine current version. Using $v\n");
+        } else {
+            Output::Info("Current version is $v\n");
+        }
+
+    }
+
+    if (substr_count($v, ".") > 2) {
+        $e = explode(".",$v);
+        $v = $e[0].".".$e[1].".".$e[2];
+    }
+
+    $v .= ".".time();
+
+    //$v .= "-composer".str_replace('.','_', $composerVersion);
+
+    Output::Info("New version being set to $v\n");
+
+    return $v;
+}
+
+
+function custom_copy($src, $dst) {
+
+    global $verbose;
+
+    if (!is_dir($src)) {
+        copy($src, $dst);
+        return;
+    }
+
+    // open the source directory
+    $dir = opendir($src);
+
+    // Make the destination directory if not exist
+    @mkdir($dst);
+
+    // Loop through the files in source directory
+    while( $file = readdir($dir) ) {
+
+        if (( $file != '.' ) && ( $file != '..' )) {
+            if ( is_dir($src . '/' . $file) )
+            {
+
+                // Recursively calling custom copy function
+                // for sub directory
+                custom_copy($src . '/' . $file, $dst . '/' . $file);
+
+            }
+            else {
+                $source = $src . DIRECTORY_SEPARATOR . $file;
+                $destination = strtolower($dst) . DIRECTORY_SEPARATOR . strtolower($file);
+                //copy($src . '/' . $file, $dst . '/' . $file);
+                copy($source, $destination);
+                Output::Verbose('Copied '.$destination, $verbose);
+            }
+        }
+    }
+
+    closedir($dir);
 }

@@ -4,6 +4,14 @@ namespace rei\CreatePhar;
 
 class Output {
 
+    private const _normal = 0;
+    private const _bold = 1;
+    private const _underline = 4;
+    private const _blink = 5;
+    private const _reverseVideo = 7;
+
+    private const _foregroundCyan = 36;
+
     private const _lineBreak = "\n";
     private const _lightGreen = '1;32';
     private const _yellow = '1;33';
@@ -28,6 +36,14 @@ class Output {
             return $str;
         }
     }
+
+    public static function GetColorString($string, $codes = array()) {
+        global $showColors;
+        if (count($codes) == 0 || !$showColors) { return $string; }
+
+        return "\e[".implode(';', $codes).'m'.$string."\e[0m";
+    }
+
     private static function printColor($str, $colorCode) {
         echo self::colorString($str, $colorCode);
     }
@@ -79,6 +95,12 @@ class Output {
         echo $str.self::_lineBreak;
     }
 
+    public static function Define(string $key, string $value) {
+        $key = self::_RemoveLineBreaks($key);
+        $value = self::_RemoveLineBreaks($value);
+        echo self::GetColorString($key, array(self::_bold,self::_foregroundCyan)) . ' - ' . $value . self::_lineBreak;
+    }
+
     /**
      * Output a message that should require user attention
      * @param string $str
@@ -93,6 +115,10 @@ class Output {
     public static function Heading($str) {
         $str = self::_RemoveLineBreaks($str);
         echo self::_lineBreak.self::colorString($str,self::_lightGreen).self::_lineBreak;
+    }
+
+    public static function NewLine() {
+        echo self::_lineBreak;
     }
     public static function Success($str) {
         echo self::colorString("🆗 ".$str,self::_blue).self::_lineBreak;
