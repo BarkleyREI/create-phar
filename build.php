@@ -5,16 +5,20 @@ ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
 use Barkley\CreatePhar\Utilities\Composer;
+use Barkley\CreatePhar\Utilities\Docs;
+use Barkley\CreatePhar\Utilities\Version;
 use rei\CreatePhar\Output;
 
 require_once(__DIR__.'/Utilities/Composer.php');
+require_once(__DIR__.'/Utilities/Docs.php');
+require_once(__DIR__.'/Utilities/Version.php');
 require_once('Validation.php');
 
 
 
 // Settings
-$_createPharVersion = '1.4.0';
-$_minPhpVersion = '8.1.6';
+$_createPharVersion = '1.4.1';
+$_minPhpVersion = '8.1.0';
 $showColors = true;
 
 /**
@@ -31,6 +35,8 @@ array_shift($argv);
 $projectDirectory = getcwd(); // directory that the project is running from
 $configIniPath = $projectDirectory.'/src/php/config.ini';   // project config file
 $composer = new Composer($projectDirectory);
+$docs = new Docs($projectDirectory);
+$version = new Version($projectDirectory, $_createPharVersion);
 
 /*-- Arguments --*/
 if (hasArgument('-h')) {
@@ -57,11 +63,11 @@ if (hasArgument('-h')) {
     Output::Heading('Builder Information');
     Output::Define('create-phar Version', $_createPharVersion);
     Output::Define('create-phar Directory', __DIR__);
-    Output::Define('Composer Version', Composer::GetComposerVersion());
+    Output::Define('Composer Version', $composer->GetComposerVersion());
     Output::Define('PHP Version', phpversion());
 
     Output::Heading('Project Information');
-    //Output::Define('Current Version',);
+    Output::Define('Current Version',$version->GetCurrentVersion()??'Not set');
 
     Output::NewLine();
     exit();
@@ -298,8 +304,14 @@ $copyRoot = $projectDirectory . "/build";
 $fullPath = $buildRoot . "/" . $project . ".phar";
 
 Output::Heading("\nFinalizing Output:\n");
-$v = getNewVersion();
-setNewVersion($v);
+
+
+
+$v = $version->GetNewVersion($argv);
+$version->SetNewVersion($v, $namespace);
+Output::Info('Set version to '.$v);
+
+
 
 // Delete from build root
 
@@ -307,7 +319,7 @@ setNewVersion($v);
 
 
 
-// define if we under Windows
+// define if we are under Windows
 $tmp = dirname(__FILE__);
 if (strpos($tmp, '/', 0)!==false) {
     define('WINDOWS_SERVER', false);
@@ -442,7 +454,7 @@ if ($doPhar) {
     Output::Info("PHAR file copied as .ext\n");
 
     // Copy .htaccess file
-    writeToFile($buildRoot . '/.htaccess', file_get_contents(__DIR__.DIRECTORY_SEPARATOR.'templates'.DIRECTORY_SEPARATOR.'.htaccess'));
+	$docs->WriteFileToBuild('/.htaccess', file_get_contents(__DIR__.DIRECTORY_SEPARATOR.'templates'.DIRECTORY_SEPARATOR.'.htaccess'));
 
     //PharUtilities::CleanUp($srcRoot);
 
@@ -536,9 +548,29 @@ if ($doManual) {
     copy($projectDirectory."/version.txt", $copyRoot.DIRECTORY_SEPARATOR."version.txt");
 
 }
-
 Output::Success("PHAR creation process completed!");
 
+/******************/
+
+Output::Heading('Handling Document Logic');
+$filesAdded = $docs->AddTemplatesIfNotExists();
+if ($verbose) {
+	if (count($filesAdded) == 0) {
+		Output::Info('No new files added.');
+	} else {
+		foreach ($filesAdded as $file) {
+			Output::Info('Added file ' . $file);
+		}
+	}
+}
+$shieldResult = $docs->UpdateShields($version->GetCurrentShortVersion());
+if (!$shieldResult) {
+	Output::Warning('To add dynamic shield icons to your project\'s README.md file, add the text '.Docs::SHIELDS_MARKUP.' within the file.');
+} else {
+	Output::Info('Icons updated in your project\'s README.md file.');
+}
+
+/*******************/
 
 Output::Heading("Create local composer project:");
 
@@ -602,81 +634,10 @@ function getArgument($index) {
     return $argv[$index];
 }
 
-function getCurrentVersion() {
-    global $projectDirectory;
-    if (!file_exists($projectDirectory.'/version.txt')) {
-        file_put_contents($projectDirectory.'/version.txt', '1.0.0.0');
-        return '1.0.0.0';
-    }
-    $fgc = file_get_contents($projectDirectory.'/version.txt');
-    if ($fgc === false) {
-        return null;
-    }
-    return $fgc;
-}
 
-function writeToFile($file, $content, $createIfNotExist = true) {
-    if (!file_exists($file)) {
-        if (!$createIfNotExist) {
-            Output::Error('File ' . $file . ' does not exist. Please create an empty file there first.');
-        }
-    }
-    file_put_contents($file, $content);
-}
 
-function setNewVersion($v) {
-    global $_createPharVersion, $namespace, $projectDirectory;
-    $buildString = "Built with create-phar ($_createPharVersion) on ". date("D M d, Y G:i");
-    writeToFile($projectDirectory.'/version.txt', $v);
-    writeToFile($projectDirectory.'/src/php/Config/Version.php', "<?php /* Auto-generated from create-phar.php - Do not edit */ namespace ".$namespace."Config; class Version { public static function getBuildInfo() { return '$buildString'; } public static function getVersion() { return '$v'; } }");
-}
 
-function getNewVersion() {
 
-    global $argv;
-
-    $v = null;
-
-    if ($argv !== null && is_array($argv)) {
-        foreach ($argv as $arg) {
-            $p = strpos($arg, '.');
-            if ($p !== false && strpos($arg, '.', $p) !== false) {
-                $v = $arg;
-            }
-        }
-    }
-
-    if ($v !== null) {
-
-        if (hasArgument('init')) {
-            $v = '0.0.1.0';
-        }
-        Output::Info("Using $v as new version number\n");
-    } else {
-
-        $v = getCurrentVersion();
-        if ($v === null) {
-            $v = "1.0.0";
-            Output::Info("Unable to determine current version. Using $v\n");
-        } else {
-            Output::Info("Current version is $v\n");
-        }
-
-    }
-
-    if (substr_count($v, ".") > 2) {
-        $e = explode(".",$v);
-        $v = $e[0].".".$e[1].".".$e[2];
-    }
-
-    $v .= ".".time();
-
-    //$v .= "-composer".str_replace('.','_', $composerVersion);
-
-    Output::Info("New version being set to $v\n");
-
-    return $v;
-}
 
 
 function custom_copy($src, $dst) {

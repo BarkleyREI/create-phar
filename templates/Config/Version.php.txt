@@ -1,0 +1,15 @@
+<?php
+	/* Auto-generated from create-phar.php - Do not edit */
+	namespace {{namespace}}Config;
+
+	class Version {
+
+		public static function getBuildInfo() : string { return '{{build_string}}'; }
+
+		public static function getVersion() : string { return '{{version_full}}'; }
+
+		public static function getVersionShort() : string { return '{{version_short}}'; }
+
+        public static function getCreatePharVersion() : string { return '{{createphar_version}}'; }
+
+	}
