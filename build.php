@@ -17,7 +17,7 @@ require_once('Validation.php');
 
 
 // Settings
-$_createPharVersion = '1.4.1';
+$_createPharVersion = '1.4.2';
 $_minPhpVersion = '8.1.0';
 $showColors = true;
 
@@ -77,9 +77,9 @@ if (hasArgument('-h')) {
     if (empty($v)) {
         Output::Error('Need to pass a value after -c');
     } else {
-        $o = $composer->RunCommand($v);
+        $o = $composer->RunCommand($v, true);
         if ($o !== null) {
-            Output::Message($o);
+            Output::Message($o, false);
         }
     }
     exit();

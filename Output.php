@@ -90,8 +90,10 @@ class Output {
      * Output a general message
      * @param string $str
      */
-    public static function Message(string $str){
-        $str = self::_RemoveLineBreaks($str);
+    public static function Message(string $str, bool $removeLinebreaks = true){
+		if ($removeLinebreaks) {
+			$str = self::_RemoveLineBreaks($str);
+		}
         echo $str.self::_lineBreak;
     }
 
