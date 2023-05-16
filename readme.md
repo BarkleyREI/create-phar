@@ -32,5 +32,9 @@ followed by the new version number. For example `create-phar 1.2.4`.
 
 ## Run Flags
 
+- `-h` - Outputs help commands.
 - `-v` - Runs in verbose mode, providing more output during the build process.
 - `-u` - Updates Composer and dependencies. By default, running a build does not update these items.
+- `-i` - Outputs version information on the current project without doing any build steps.
+- `-c` - Run a Composer command against the curent project using the Composer from the create-phar build.
+- `-fixpsr` - Fix PSR adjustments. Should only need to be run if prompted to do so.
