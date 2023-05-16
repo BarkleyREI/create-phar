@@ -131,5 +131,8 @@ class Output {
         return $str;
     }
 
+    public static function OutputVisualLine($length = 80) {
+        self::printColor(str_repeat('-',$length).self::_lineBreak, self::_yellow);
+    }
 
 }

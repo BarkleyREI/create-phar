@@ -12,12 +12,15 @@ use rei\CreatePhar\Output;
 require_once(__DIR__.'/Utilities/Composer.php');
 require_once(__DIR__.'/Utilities/Docs.php');
 require_once(__DIR__.'/Utilities/Version.php');
+require_once(__DIR__.'/GitHub/Repository.php');
 require_once('Validation.php');
 
 
+$repo = new Repository();
+$_latestReleaseCPhar = $repo->GetLatestReleaseVersion();
 
 // Settings
-$_createPharVersion = '1.4.2';
+$_createPharVersion = '1.4.3';
 $_minPhpVersion = '8.1.0';
 $showColors = true;
 
@@ -37,6 +40,21 @@ $configIniPath = $projectDirectory.'/src/php/config.ini';   // project config fi
 $composer = new Composer($projectDirectory);
 $docs = new Docs($projectDirectory);
 $version = new Version($projectDirectory, $_createPharVersion);
+
+/*-- Version check/notification --*/
+$vc = version_compare($_createPharVersion, $_latestReleaseCPhar);
+if ($vc == -1) {
+    Output::OutputVisualLine();
+    Output::Warning("You are using version $_createPharVersion of Create-Phar. Version $_latestReleaseCPhar is now available.");
+    Output::Message("Download the latest release at ".$repo->GetReleasesUrl());
+    Output::OutputVisualLine();
+} elseif ($vc == 1) {
+    Output::OutputVisualLine();
+    Output::Warning("You are using an unreleased version of Create-Phar ($_createPharVersion). The latest release is $_latestReleaseCPhar.");
+    Output::Message("Unless this is expected, download and use the latest release from ".$repo->GetReleasesUrl());
+    Output::OutputVisualLine();
+}
+
 
 /*-- Arguments --*/
 if (hasArgument('-h')) {
