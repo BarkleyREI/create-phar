@@ -1,5 +1,10 @@
 parameters:
     level: 9
+    paths:
+        - src/php
+    bootstrapFiles:
+        - src/php/vendor/autoload.php
     excludePaths:
-        - */vendor/*
-        - */tests/*
+        - src/php/vendor
+    scanDirectories:
+        - src/php/vendor
