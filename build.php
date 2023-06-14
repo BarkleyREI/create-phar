@@ -6,6 +6,7 @@ error_reporting(E_ALL);
 
 use Barkley\CreatePhar\Utilities\Composer;
 use Barkley\CreatePhar\Utilities\Docs;
+use Barkley\CreatePhar\Utilities\Validation;
 use Barkley\CreatePhar\Utilities\Version;
 use rei\CreatePhar\Output;
 
@@ -13,14 +14,15 @@ require_once(__DIR__.'/Utilities/Composer.php');
 require_once(__DIR__.'/Utilities/Docs.php');
 require_once(__DIR__.'/Utilities/Version.php');
 require_once(__DIR__.'/GitHub/Repository.php');
-require_once('Validation.php');
+require_once(__DIR__ . '/Validation.php');
+require_once(__DIR__ . '/Utilities/Analyzer.php');
 
 
 $repo = new Repository();
 $_latestReleaseCPhar = $repo->GetLatestReleaseVersion();
 
 // Settings
-$_createPharVersion = '1.4.3';
+$_createPharVersion = '1.5.0';
 $_minPhpVersion = '8.1.0';
 $showColors = true;
 
@@ -252,7 +254,13 @@ if (!file_exists($composerPath)) {
 
 
 
-
+Output::Heading('Performing Analysis');
+$analyzer = new \Barkley\CreatePhar\Utilities\Analyzer($projectDirectory);
+$analyzer->FullAnalyze();
+Output::Info($analyzer->GetFullAnalysisInfo());
+foreach ($analyzer->GetFileErrorCounts() as $filename => $count) {
+    Output::Message("$count: $filename");
+}
 
 
 
@@ -581,7 +589,7 @@ if ($verbose) {
 		}
 	}
 }
-$shieldResult = $docs->UpdateShields($version->GetCurrentShortVersion());
+$shieldResult = $docs->UpdateShields($version->GetCurrentShortVersion(), $analyzer->GetErrorCountTotal(), $_createPharVersion);
 if (!$shieldResult) {
 	Output::Warning('To add dynamic shield icons to your project\'s README.md file, add the text '.Docs::SHIELDS_MARKUP.' within the file.');
 } else {

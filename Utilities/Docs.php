@@ -11,6 +11,7 @@ class Docs {
 	public const SHIELDS_MARKUP = '<!--shields-->';
 	public const SHIELDS_MARKUP_CLOSE = '<!--/shields-->';
 	public const COLOR_ROCKET_RED = 'ea002a';
+    public const SIMPLE_RED = 'red';
 
 	public function __construct(string $projectDirectory) {
 		if (str_ends_with($projectDirectory,'/')) {
@@ -60,8 +61,10 @@ class Docs {
 
 	}
 
-	private function _GetShieldMarkup($label, $message, $color = self::COLOR_ROCKET_RED) : string {
+	private function _GetShieldMarkup($title, $label, $message, $color = self::SIMPLE_RED, ?string $linkUrl = null) : string {
 		$url = 'https://img.shields.io/static/v1?label='.urlencode($label).'&message='.urlencode($message).'&color='.$color;
+
+        //file_put_contents($this->_projectDirectory."/docs/img/$title.svg", file_get_contents($url));
 
 		$cLabel = str_replace('[','', $label);
 		$cLabel = str_replace(']','', $cLabel);
@@ -71,17 +74,26 @@ class Docs {
 		$cMessage = str_replace(']','', $cMessage);
 		$cMessage = str_replace('"','&quot;', $cMessage);
 
-		return '<img alt="'.$cLabel.' - '.$cMessage.'" src="'.$url.'" />';
-		//return '!['.$cLabel.' - '.$cMessage.']('.$url.')';
+		//return '<img alt="'.$cLabel.' - '.$cMessage.'" src="'.$url.'" />';
+        // /docs/img/'.$title.'.svg
+        $imgMarkup = '!['.$cLabel.' - '.$cMessage.']('.$url.')';
+        if (!empty($linkUrl)) {
+            $imgMarkup = "[$imgMarkup]($linkUrl)";
+        }
+		return "$imgMarkup\r\n";
+
+
 	}
 
-	/**
-	 * Updates the shield images in the README.md file of the project. Will return
-	 * false if this section cannot be found within the project.
-	 * @param $version
-	 * @return bool
-	 */
-	public function UpdateShields($version) : bool {
+    /**
+     * Updates the shield images in the README.md file of the project. Will return
+     * false if this section cannot be found within the project.
+     * @param string $version
+     * @param int $errorCount
+     * @param string $createPharVersion
+     * @return bool
+     */
+	public function UpdateShields(string $version, int $errorCount, string $createPharVersion) : bool {
 		$filePath = $this->_projectDirectory.'/README.md';
 		$content = file_get_contents($filePath);
 
@@ -89,9 +101,15 @@ class Docs {
 			return false;
 		}
 
-		$shields = self::SHIELDS_MARKUP;
-		$shields .= $this->_GetShieldMarkup('Version', $version);
-		$shields .= self::SHIELDS_MARKUP_CLOSE;
+		$shields = self::SHIELDS_MARKUP."\r\n";
+		$shields .= $this->_GetShieldMarkup('version', 'Version', $version);
+        //$shields .= '<a href="https://github.com/BarkleyREI/create-phar">';
+        $shields .= $this->_GetShieldMarkup('version-create-phar', 'Built with Create-Phar', $createPharVersion, 'lightgrey', 'https://github.com/BarkleyREI/create-phar');
+        //$shields .= '</a>';
+        //$shields .= '<a href="./analysis.json">';
+        $shields .= $this->_GetShieldMarkup('analysis', 'Analyzer Errors', $errorCount, 'lightgrey', './analysis.json');
+        //$shields .= '</a>';
+		$shields .= self::SHIELDS_MARKUP_CLOSE."\r\n";;
 
 		if (str_contains($content, self::SHIELDS_MARKUP_CLOSE)) {
 			$cNew = substr($content, 0, strpos($content, self::SHIELDS_MARKUP));
