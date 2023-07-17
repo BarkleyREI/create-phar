@@ -22,7 +22,7 @@ $repo = new Repository();
 $_latestReleaseCPhar = $repo->GetLatestReleaseVersion();
 
 // Settings
-$_createPharVersion = '1.5.1';
+$_createPharVersion = '1.5.2';
 $_minPhpVersion = '8.1.0';
 $showColors = true;
 

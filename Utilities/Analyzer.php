@@ -14,7 +14,7 @@ class Analyzer {
 
     public function FullAnalyze() {
         file_put_contents($this->_projectDirectory.'/phpstan.neon', file_get_contents(__DIR__.'/../phpstan.neon'));
-        shell_exec(__DIR__.'/../vendor/bin/phpstan analyze --error-format=prettyJson --no-ansi --no-progress -c '.$this->_projectDirectory.'/phpstan.neon > analysis.json');
+        shell_exec(__DIR__.'/../vendor/bin/phpstan analyze --error-format=prettyJson --no-ansi --no-progress -c "'.$this->_projectDirectory.'/phpstan.neon" > analysis.json');
     }
 
     public function GetErrorCountTotal() : int {
