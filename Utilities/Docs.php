@@ -28,11 +28,16 @@ class Docs {
 	 * @return bool
 	 */
 	private function _AddIfNotExist(string $path) : bool {
-		if (!file_exists($this->_projectDirectory.$path)) {
-			file_put_contents(
-				$this->_projectDirectory.$path,
-				__DIR__.'/../templates'.$path
-			);
+        $to = $this->_projectDirectory.$path;
+		if (!file_exists($to)) {
+
+            $pathinfo = pathinfo($to);
+            if (!file_exists($pathinfo['dirname'])) {
+                mkdir($pathinfo['dirname'], 0777, true);
+            }
+
+            $from =__DIR__.'/../templates'.$path;
+            copy($from, $to);
 			return true;
 		}
 		return false;
@@ -89,11 +94,11 @@ class Docs {
      * Updates the shield images in the README.md file of the project. Will return
      * false if this section cannot be found within the project.
      * @param string $version
-     * @param int $errorCount
+     * @param int|null $errorCount
      * @param string $createPharVersion
      * @return bool
      */
-	public function UpdateShields(string $version, int $errorCount, string $createPharVersion) : bool {
+	public function UpdateShields(string $version, ?int $errorCount, string $createPharVersion) : bool {
 		$filePath = $this->_projectDirectory.'/README.md';
 		$content = file_get_contents($filePath);
 
@@ -107,6 +112,9 @@ class Docs {
         $shields .= $this->_GetShieldMarkup('version-create-phar', 'Built with Create-Phar', $createPharVersion, 'lightgrey', 'https://github.com/BarkleyREI/create-phar');
         //$shields .= '</a>';
         //$shields .= '<a href="./analysis.json">';
+        if ($errorCount == null) {
+            $errorCount = "Not Run";
+        }
         $shields .= $this->_GetShieldMarkup('analysis', 'Analyzer Errors', $errorCount, 'lightgrey', './analysis.json');
         //$shields .= '</a>';
 		$shields .= self::SHIELDS_MARKUP_CLOSE."\r\n";;

@@ -22,7 +22,7 @@ $repo = new Repository();
 $_latestReleaseCPhar = $repo->GetLatestReleaseVersion();
 
 // Settings
-$_createPharVersion = '1.5.2';
+$_createPharVersion = '1.5.3';
 $_minPhpVersion = '8.1.0';
 $showColors = true;
 
@@ -255,11 +255,15 @@ if (!file_exists($composerPath)) {
 
 
 Output::Heading('Performing Analysis');
-$analyzer = new \Barkley\CreatePhar\Utilities\Analyzer($projectDirectory);
-$analyzer->FullAnalyze();
-Output::Info($analyzer->GetFullAnalysisInfo());
-foreach ($analyzer->GetFileErrorCounts() as $filename => $count) {
-    Output::Message("$count: $filename");
+if (hasArgument('init')) {
+    Output::Info('Skipping analysis for init run...');
+} else {
+    $analyzer = new \Barkley\CreatePhar\Utilities\Analyzer($projectDirectory);
+    $analyzer->FullAnalyze();
+    Output::Info($analyzer->GetFullAnalysisInfo());
+    foreach ($analyzer->GetFileErrorCounts() as $filename => $count) {
+        Output::Message("$count: $filename");
+    }
 }
 
 
@@ -589,7 +593,13 @@ if ($verbose) {
 		}
 	}
 }
-$shieldResult = $docs->UpdateShields($version->GetCurrentShortVersion(), $analyzer->GetErrorCountTotal(), $_createPharVersion);
+
+$errorCount = null;
+if (isset($analyzer)) {
+    $errorCount = $analyzer->GetErrorCountTotal();
+}
+
+$shieldResult = $docs->UpdateShields($version->GetCurrentShortVersion(), $errorCount, $_createPharVersion);
 if (!$shieldResult) {
 	Output::Warning('To add dynamic shield icons to your project\'s README.md file, add the text '.Docs::SHIELDS_MARKUP.' within the file.');
 } else {
