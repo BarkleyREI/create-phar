@@ -13,7 +13,7 @@ use rei\CreatePhar\Output;
 require_once(__DIR__.'/Utilities/Composer.php');
 require_once(__DIR__.'/Utilities/Docs.php');
 require_once(__DIR__.'/Utilities/Version.php');
-require_once(__DIR__.'/GitHub/Repository.php');
+//require_once(__DIR__.'/GitHub/Repository.php');
 require_once(__DIR__ . '/Validation.php');
 require_once(__DIR__ . '/Utilities/Analyzer.php');
 
