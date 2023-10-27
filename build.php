@@ -566,7 +566,7 @@ if ($doManual) {
 
                         custom_copy(
                             $srcRoot.DIRECTORY_SEPARATOR.$filename.DIRECTORY_SEPARATOR.$file,
-                            $copyDir.DIRECTORY_SEPARATOR.$filename.DIRECTORY_SEPARATOR.$file
+                            $copyDir.DIRECTORY_SEPARATOR.$file
                         );
                     }
 
