@@ -34,7 +34,7 @@ final class GithubExceptionThrower implements Plugin
 
             // If error:
             $remaining = ResponseMediator::getHeader($response, 'X-RateLimit-Remaining');
-            if (null !== $remaining && 1 > $remaining && 'rate_limit' !== substr($request->getRequestTarget(), 1, 10)) {
+            if ((429 === $response->getStatusCode()) && null !== $remaining && 1 > $remaining && 'rate_limit' !== substr($request->getRequestTarget(), 1, 10)) {
                 $limit = (int) ResponseMediator::getHeader($response, 'X-RateLimit-Limit');
                 $reset = (int) ResponseMediator::getHeader($response, 'X-RateLimit-Reset');
 
@@ -56,7 +56,7 @@ final class GithubExceptionThrower implements Plugin
                 if (422 === $response->getStatusCode() && isset($content['errors'])) {
                     $errors = [];
                     foreach ($content['errors'] as $error) {
-                        switch ($error['code']) {
+                        switch ($error['code'] ?? null) {
                             case 'missing':
                                 $errors[] = sprintf('The %s %s does not exist, for resource "%s"', $error['field'], $error['value'], $error['resource']);
                                 break;
@@ -78,6 +78,12 @@ final class GithubExceptionThrower implements Plugin
                                 break;
 
                             default:
+                                if (is_string($error)) {
+                                    $errors[] = $error;
+
+                                    break;
+                                }
+
                                 if (isset($error['message'])) {
                                     $errors[] = $error['message'];
                                 }
@@ -112,6 +118,21 @@ final class GithubExceptionThrower implements Plugin
                 $url = substr((string) ResponseMediator::getHeader($response, 'X-GitHub-SSO'), 14);
 
                 throw new SsoRequiredException($url);
+            }
+
+            $remaining = ResponseMediator::getHeader($response, 'X-RateLimit-Remaining');
+            if ((403 === $response->getStatusCode()) && null !== $remaining && 1 > $remaining && isset($content['message']) && (0 === strpos($content['message'], 'API rate limit exceeded'))) {
+                $limit = (int) ResponseMediator::getHeader($response, 'X-RateLimit-Limit');
+                $reset = (int) ResponseMediator::getHeader($response, 'X-RateLimit-Reset');
+
+                throw new ApiLimitExceedException($limit, $reset);
+            }
+
+            $reset = (int) ResponseMediator::getHeader($response, 'X-RateLimit-Reset');
+            if ((403 === $response->getStatusCode()) && 0 < $reset && isset($content['message']) && (0 === strpos($content['message'], 'You have exceeded a secondary rate limit.'))) {
+                $limit = (int) ResponseMediator::getHeader($response, 'X-RateLimit-Limit');
+
+                throw new ApiLimitExceedException($limit, $reset);
             }
 
             throw new RuntimeException(isset($content['message']) ? $content['message'] : $content, $response->getStatusCode());

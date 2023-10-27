@@ -1,8 +1,23 @@
 {
+    "name": "barkley/create-phar",
+	"description": "PHP packaging and build process",
+	"license": "MIT",
+	"authors": [
+		{
+			"name": "Joshua Petry",
+			"email": "joshie@gmail.com",
+			"role": "Developer"
+		}
+	],
+	"scripts": {
+		"create-phar": "Barkley\\Scripts\\Build"
+	},
     "require": {
-        "knplabs/github-api": "3.0",
+        "knplabs/github-api": "^3.0",
         "symfony/http-client": "^6.2",
-        "nyholm/psr7": "^1.8"
+        "nyholm/psr7": "^1.8",
+		"php": ">=8.1",
+        "symfony/console": "^6.3"
     },
     "config": {
         "allow-plugins": {
