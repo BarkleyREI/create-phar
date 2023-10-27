@@ -2,14 +2,22 @@
 
 namespace Barkley\CreatePhar\Utilities;
 
+use rei\CreatePhar\Output;
+
 class Composer {
+
+	private static string $_DS = '/';
+	private bool $_verbose = false;
+	public function SetVerbose(bool $flag) : void {
+		$this->_verbose = $flag;
+	}
 
     /**
      * Returns the full path to the Composer phar file in this project.
      * @return string
      */
     public function GetComposerPath() : string {
-        return __DIR__ . '/../composer.phar';
+        return __DIR__ . self::$_DS . '..' . self::$_DS . 'composer.phar';
     }
 
     /**
@@ -17,7 +25,7 @@ class Composer {
      * @return string
      */
     public function GetComposerJsonDirectory() : string {
-        return $this->_projectDirectory . '/src/php/';
+        return $this->_projectDirectory . self::$_DS . 'src' . self::$_DS .'php' . self::$_DS;
     }
 
     /**
@@ -25,7 +33,7 @@ class Composer {
      * @return string
      */
     public function GetComposerJsonPath() : string {
-        return $this->GetComposerJsonDirectory() . '/composer.json';
+        return $this->GetComposerJsonDirectory() . self::$_DS . 'composer.json';
     }
 
     public function GetComposerVersion() : string {
@@ -43,7 +51,7 @@ class Composer {
      */
     public function RunCommand($command, $useWorkingDirectory = false) : ?string {
         if ($useWorkingDirectory) {
-            return $this->_ShellExec('php "'.$this->GetComposerPath().'" --working-dir="'.$this->GetComposerJsonDirectory().'" '.$command);
+            return $this->_ShellExec('php "'.$this->GetComposerPath().'" -d "'.$this->GetComposerJsonDirectory().'" '.$command);
         }
         return $this->_ShellExec('php "'.$this->GetComposerPath().'" '.$command);
     }
@@ -55,6 +63,7 @@ class Composer {
 
     private function _ShellExec($cmd) : string {
         //echo "\n\n".$cmd."\n\n\n";
+		Output::Verbose("Shell Exec: ".$cmd, $this->_verbose);
         return shell_exec($cmd.' 2>&1');
     }
 

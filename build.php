@@ -22,7 +22,7 @@ $repo = new Repository();
 $_latestReleaseCPhar = $repo->GetLatestReleaseVersion();
 
 // Settings
-$_createPharVersion = '1.5.3';
+$_createPharVersion = '1.5.4';
 $_minPhpVersion = '8.1.0';
 $showColors = true;
 
@@ -132,6 +132,7 @@ if (hasArgument('-h')) {
 }
 
 $verbose = hasArgument('-v');
+$composer->SetVerbose($verbose);
 $update = hasArgument('-u');
 
 /*--- Initial Output ---*/
@@ -301,11 +302,14 @@ file_put_contents(__DIR__.'/composer-version.txt', $composer->GetComposerVersion
 
 if ($update) {
     Output::Heading("Upgrading and installing from Composer:\n");
-    echo shell_exec('php "' . $composerPath . '" --working-dir="' . $composerJsonPath . '" u');
-    echo shell_exec('php "' . $composerPath . '" --working-dir="' . $composerJsonPath . '" i');
+	echo $composer->RunCommand('u', true);
+	echo $composer->RunCommand('i', true);
+	//run_shell_cmd('php "' . $composerPath . '" --working-dir="' . escapeshellarg($composerJsonPath) . '" u');
+	//run_shell_cmd('php "' . $composerPath . '" --working-dir="' . escapeshellarg($composerJsonPath) . '" i');
 
 	Output::Heading('Installed Composer Projects:');
-	echo shell_exec('php "' . $composerPath . '" --working-dir="' . $composerJsonPath . '" show');
+	//run_shell_cmd('php "' . $composerPath . '" --working-dir="' . escapeshellarg($composerJsonPath) . '" show');
+	echo $composer->RunCommand('show', true);
 }
 
 
@@ -319,7 +323,7 @@ if (!$composer->HasValue('autoload','psr-4')) {
     Output::Error('You must have setup autoload/psr-4 section of your composer.json to support autoloading. Please fix before continuing. You can add this with the command "create-phar -fixpsr namespace", replacing "namespace" with your root namespace.');
 }
 
-echo $composer->RunCommand('dump-autoload -o',true);
+echo $composer->RunCommand('dump-autoload --optimize',true);
 
 $namespace = array_keys($composer->GetValue('autoload','psr-4'))[0];
 
@@ -714,4 +718,13 @@ function custom_copy($src, $dst) {
     }
 
     closedir($dir);
+}
+
+
+function run_shell_cmd($shellCmd) {
+
+	global $verbose;
+
+	Output::Verbose('Running Shell Command: '.$shellCmd, $verbose);
+	echo shell_exec($shellCmd);
 }
