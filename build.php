@@ -18,13 +18,15 @@ require_once(__DIR__ . '/Validation.php');
 require_once(__DIR__ . '/Utilities/Analyzer.php');
 
 
-$repo = new Repository();
-$_latestReleaseCPhar = $repo->GetLatestReleaseVersion();
+//$repo = new Repository();
+//$_latestReleaseCPhar = $repo->GetLatestReleaseVersion();
 
 // Settings
-$_createPharVersion = '1.5.4';
+$_createPharVersion = '2.0.0-BETA1';
 $_minPhpVersion = '8.1.0';
 $showColors = true;
+
+$_latestReleaseCPhar = $_createPharVersion;
 
 /**
  * View version history on GitHub: https://github.com/BarkleyREI/create-phar
@@ -48,12 +50,12 @@ $vc = version_compare($_createPharVersion, $_latestReleaseCPhar);
 if ($vc == -1) {
     Output::OutputVisualLine();
     Output::Warning("You are using version $_createPharVersion of Create-Phar. Version $_latestReleaseCPhar is now available.");
-    Output::Message("Download the latest release at ".$repo->GetReleasesUrl());
+    //Output::Message("Download the latest release at ".$repo->GetReleasesUrl());
     Output::OutputVisualLine();
 } elseif ($vc == 1) {
     Output::OutputVisualLine();
     Output::Warning("You are using an unreleased version of Create-Phar ($_createPharVersion). The latest release is $_latestReleaseCPhar.");
-    Output::Message("Unless this is expected, download and use the latest release from ".$repo->GetReleasesUrl());
+    //Output::Message("Unless this is expected, download and use the latest release from ".$repo->GetReleasesUrl());
     Output::OutputVisualLine();
 }
 
