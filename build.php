@@ -557,7 +557,10 @@ if ($doManual) {
                         $copyDir = $copyRoot.DIRECTORY_SEPARATOR.$filename;
                         if (!file_exists($copyDir)) {
                             Output::Verbose("Creating $copyDir...", $verbose);
-                            mkdir($copyDir, 0777, true);
+                            $mkdirSuccess = mkdir($copyDir, 0777, true);
+                            if (!$mkdirSuccess) {
+                                die("Directory creation failure on ".$copyDir);
+                            }
                         }
 
 
