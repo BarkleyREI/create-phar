@@ -3,7 +3,7 @@
         'name' => 'barkley/create-phar',
         'pretty_version' => 'dev-master',
         'version' => 'dev-master',
-        'reference' => '6be76bbe114b33a8d6fd318151720767b404274e',
+        'reference' => '9bd4797f41789b237de21c6e19d76e9cc9985339',
         'type' => 'library',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -13,7 +13,7 @@
         'barkley/create-phar' => array(
             'pretty_version' => 'dev-master',
             'version' => 'dev-master',
-            'reference' => '6be76bbe114b33a8d6fd318151720767b404274e',
+            'reference' => '9bd4797f41789b237de21c6e19d76e9cc9985339',
             'type' => 'library',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),
