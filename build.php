@@ -261,12 +261,13 @@ Output::Heading('Performing Analysis');
 if (hasArgument('init')) {
     Output::Info('Skipping analysis for init run...');
 } else {
-    $analyzer = new \Barkley\CreatePhar\Utilities\Analyzer($projectDirectory);
-    $analyzer->FullAnalyze();
-    Output::Info($analyzer->GetFullAnalysisInfo());
-    foreach ($analyzer->GetFileErrorCounts() as $filename => $count) {
-        Output::Message("$count: $filename");
-    }
+    Output::Info('Analysis temporarily disabled for version 2.0.0');
+//    $analyzer = new \Barkley\CreatePhar\Utilities\Analyzer($projectDirectory);
+//    $analyzer->FullAnalyze();
+//    Output::Info($analyzer->GetFullAnalysisInfo());
+//    foreach ($analyzer->GetFileErrorCounts() as $filename => $count) {
+//        Output::Message("$count: $filename");
+//    }
 }
 
 
