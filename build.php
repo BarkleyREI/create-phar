@@ -371,11 +371,16 @@ if (!WINDOWS_SERVER) {
         //array_map('unlink', glob($buildRoot."/*"));
         //rmdir($buildRoot);
 
-        $files = array_diff(scandir($buildRoot), array('.','..'));
-
-        foreach ($files as $file) {
-            (is_dir("$buildRoot/$file")) ? delTree("$buildRoot/$file") : unlink("$buildRoot/$file");
+        function delTree($dir, $deleteSelf = true) {
+            $files = array_diff(scandir($dir), array('.', '..'));
+            foreach ($files as $file) {
+                (is_dir("$dir/$file")) ? delTree("$dir/$file") : unlink("$dir/$file");
+            }
+            if ($deleteSelf) {
+                rmdir($dir);
+            }
         }
+        delTree($buildRoot, false);
 
     }
 
