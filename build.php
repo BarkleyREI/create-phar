@@ -369,7 +369,14 @@ if (!WINDOWS_SERVER) {
     foreach ($files as $file) {
         // chown($file, 666);
         //array_map('unlink', glob($buildRoot."/*"));
-        rmdir($buildRoot);
+        //rmdir($buildRoot);
+
+        $files = array_diff(scandir($buildRoot), array('.','..'));
+
+        foreach ($files as $file) {
+            (is_dir("$buildRoot/$file")) ? delTree("$buildRoot/$file") : unlink("$buildRoot/$file");
+        }
+
     }
 
 } else {
