@@ -2,15 +2,25 @@
 
 ## Overview
 
-This project's intent is to create the structure needed for new PHP projects,
-as well as building those projects into a self-contained PHAR file.
+This project will aid in creating PHP projects that following Barkley's typical development flow, and
+will allow the creation of versioned PHAR files for projects to be easily distributed to systems 
+that are detached from any code repository. 
+
+> _Barkley's PHP development process is ever-changing, so updates and changes to this project will likely shift around frequently as well. However, backwards-compatibility will always be important as we move forward. We will intend to support the ability to disable any new features that get added._
 
 ## Setup
+
+### Composer
+
+> _Composer support has been introduced in v2.0.0, and is relatively fresh, so proceed with caution. This will be supported on Linux._
+
+Install the Composer package `barkley\create-phar` ([see Packagist](https://packagist.org/packages/barkley/create-phar)).
+Once installed, you should be able to run `php vendor/barkley/create-phar/build.php` from the root of your project. (_Anytime instructions below refer to the command `create-phar`, you will need to use this path instead)_
 
 ### Windows
 
 Add the directory for the create-phar project to your system's PATH
-variable. If done correctly you should see output when you type _create-phar_
+variable. If done correctly you should see output when you type `create-phar`
 in your system's terminal.
 
 ## Project Initialization
