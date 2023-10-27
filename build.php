@@ -705,6 +705,10 @@ function getArgument($index) {
 
 function custom_copy($src, $dst) {
 
+    Output::Verbose("custom_copy:");
+    Output::Verbose("\tSource: $src");
+    Output::Verbose("\tSource: $dst");
+
     global $verbose;
 
     if (!is_dir($src)) {
