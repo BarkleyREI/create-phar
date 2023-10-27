@@ -528,8 +528,9 @@ if ($doManual) {
     $dir = new RecursiveDirectoryIterator($srcRoot, FilesystemIterator::SKIP_DOTS);
 
     foreach ($dir as $fileinfo) {
-        $lcfile = strtolower($fileinfo->getFilename());
 
+        $lcfile = strtolower($fileinfo->getFilename());
+        $filename = $fileinfo->getFilename();
 
         $found = false;
 
@@ -546,7 +547,7 @@ if ($doManual) {
 
                     //copy_r($srcRoot."/".$lcfile, $copyRoot."/".$lcfile);
 
-                    $files = scandir($srcRoot . DIRECTORY_SEPARATOR . $lcfile);
+                    $files = scandir($srcRoot . DIRECTORY_SEPARATOR . $filename);
                     foreach ($files as $file) {
                         if( $file == "." || $file == ".." ) {
                             continue;
@@ -560,7 +561,7 @@ if ($doManual) {
                         }
 
 
-                        custom_copy($srcRoot.DIRECTORY_SEPARATOR.$lcfile.DIRECTORY_SEPARATOR.$file, strtolower($copyDir.DIRECTORY_SEPARATOR.$file));
+                        custom_copy($srcRoot.DIRECTORY_SEPARATOR.$filename.DIRECTORY_SEPARATOR.$file, strtolower($copyDir.DIRECTORY_SEPARATOR.$filename));
                     }
 
                     //$include = true;
