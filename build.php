@@ -561,7 +561,7 @@ if ($doManual) {
                         }
 
 
-                        custom_copy($srcRoot.DIRECTORY_SEPARATOR.$filename.DIRECTORY_SEPARATOR.$file, strtolower($copyDir.DIRECTORY_SEPARATOR.$filename));
+                        custom_copy($srcRoot.DIRECTORY_SEPARATOR.$filename.DIRECTORY_SEPARATOR.$file, $copyDir.DIRECTORY_SEPARATOR.$filename);
                     }
 
                     //$include = true;
