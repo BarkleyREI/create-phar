@@ -554,7 +554,7 @@ if ($doManual) {
                         }
                         Output::Verbose("\t\t$file", $verbose);
 
-                        $copyDir = $copyRoot.DIRECTORY_SEPARATOR.$lcfile;
+                        $copyDir = $copyRoot.DIRECTORY_SEPARATOR.$filename;
                         if (!file_exists($copyDir)) {
                             Output::Verbose("Creating $copyDir...", $verbose);
                             mkdir($copyDir, 0777, true);
