@@ -726,7 +726,7 @@ function custom_copy($src, $dst) {
             }
             else {
                 $source = $src . DIRECTORY_SEPARATOR . $file;
-                $destination = strtolower($dst) . DIRECTORY_SEPARATOR . strtolower($file);
+                $destination = $dst . DIRECTORY_SEPARATOR . $file;
                 //copy($src . '/' . $file, $dst . '/' . $file);
                 copy($source, $destination);
                 Output::Verbose('Copied '.$destination, $verbose);
