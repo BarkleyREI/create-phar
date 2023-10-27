@@ -543,7 +543,7 @@ if ($doManual) {
                 $manualDir = strtolower($manualDir);
                 if (strPos($lcfile, $manualDir) !== false) {
 
-                    Output::Verbose("\t$lcfile to $copyRoot/$lcfile", $verbose);
+                    Output::Verbose("\t$filename to $copyRoot/$filename", $verbose);
 
                     //copy_r($srcRoot."/".$lcfile, $copyRoot."/".$lcfile);
 
@@ -561,7 +561,10 @@ if ($doManual) {
                         }
 
 
-                        custom_copy($srcRoot.DIRECTORY_SEPARATOR.$filename.DIRECTORY_SEPARATOR.$file, $copyDir.DIRECTORY_SEPARATOR.$filename);
+                        custom_copy(
+                            $srcRoot.DIRECTORY_SEPARATOR.$filename.DIRECTORY_SEPARATOR.$file,
+                            $copyDir.DIRECTORY_SEPARATOR.$filename.DIRECTORY_SEPARATOR.$file
+                        );
                     }
 
                     //$include = true;
