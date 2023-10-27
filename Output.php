@@ -31,7 +31,7 @@ class Output {
     public static function colorString($str, $colorCode) {
         global $showColors;
         if ($showColors) {
-            return "\033[${colorCode}m$str\033[0m";
+            return "\033[{$colorCode}m$str\033[0m";
         } else {
             return $str;
         }
