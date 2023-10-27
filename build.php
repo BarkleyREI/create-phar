@@ -367,8 +367,9 @@ $deleteError = 0;
 if (!WINDOWS_SERVER) {
     $files = glob($buildRoot);
     foreach ($files as $file) {
-        chown($file, 666);
-        array_map('unlink', glob($buildRoot."/*"));
+        // chown($file, 666);
+        //array_map('unlink', glob($buildRoot."/*"));
+        rmdir($buildRoot);
     }
 
 } else {
