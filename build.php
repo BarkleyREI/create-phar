@@ -13,18 +13,20 @@ use rei\CreatePhar\Output;
 require_once(__DIR__.'/Utilities/Composer.php');
 require_once(__DIR__.'/Utilities/Docs.php');
 require_once(__DIR__.'/Utilities/Version.php');
-require_once(__DIR__.'/GitHub/Repository.php');
+//require_once(__DIR__.'/GitHub/Repository.php');
 require_once(__DIR__ . '/Validation.php');
 require_once(__DIR__ . '/Utilities/Analyzer.php');
 
 
-$repo = new Repository();
-$_latestReleaseCPhar = $repo->GetLatestReleaseVersion();
+//$repo = new Repository();
+//$_latestReleaseCPhar = $repo->GetLatestReleaseVersion();
 
 // Settings
-$_createPharVersion = '1.5.4';
+$_createPharVersion = '2.0.0-BETA1';
 $_minPhpVersion = '8.1.0';
 $showColors = true;
+
+$_latestReleaseCPhar = $_createPharVersion;
 
 /**
  * View version history on GitHub: https://github.com/BarkleyREI/create-phar
@@ -48,12 +50,12 @@ $vc = version_compare($_createPharVersion, $_latestReleaseCPhar);
 if ($vc == -1) {
     Output::OutputVisualLine();
     Output::Warning("You are using version $_createPharVersion of Create-Phar. Version $_latestReleaseCPhar is now available.");
-    Output::Message("Download the latest release at ".$repo->GetReleasesUrl());
+    //Output::Message("Download the latest release at ".$repo->GetReleasesUrl());
     Output::OutputVisualLine();
 } elseif ($vc == 1) {
     Output::OutputVisualLine();
     Output::Warning("You are using an unreleased version of Create-Phar ($_createPharVersion). The latest release is $_latestReleaseCPhar.");
-    Output::Message("Unless this is expected, download and use the latest release from ".$repo->GetReleasesUrl());
+    //Output::Message("Unless this is expected, download and use the latest release from ".$repo->GetReleasesUrl());
     Output::OutputVisualLine();
 }
 
@@ -259,12 +261,13 @@ Output::Heading('Performing Analysis');
 if (hasArgument('init')) {
     Output::Info('Skipping analysis for init run...');
 } else {
-    $analyzer = new \Barkley\CreatePhar\Utilities\Analyzer($projectDirectory);
-    $analyzer->FullAnalyze();
-    Output::Info($analyzer->GetFullAnalysisInfo());
-    foreach ($analyzer->GetFileErrorCounts() as $filename => $count) {
-        Output::Message("$count: $filename");
-    }
+    Output::Info('Analysis temporarily disabled for version 2.0.0');
+//    $analyzer = new \Barkley\CreatePhar\Utilities\Analyzer($projectDirectory);
+//    $analyzer->FullAnalyze();
+//    Output::Info($analyzer->GetFullAnalysisInfo());
+//    foreach ($analyzer->GetFileErrorCounts() as $filename => $count) {
+//        Output::Message("$count: $filename");
+//    }
 }
 
 
@@ -364,8 +367,21 @@ $deleteError = 0;
 if (!WINDOWS_SERVER) {
     $files = glob($buildRoot);
     foreach ($files as $file) {
-        chown($file, 666);
-        array_map('unlink', glob($buildRoot."/*"));
+        // chown($file, 666);
+        //array_map('unlink', glob($buildRoot."/*"));
+        //rmdir($buildRoot);
+
+        function delTree($dir, $deleteSelf = true) {
+            $files = array_diff(scandir($dir), array('.', '..'));
+            foreach ($files as $file) {
+                (is_dir("$dir/$file")) ? delTree("$dir/$file") : unlink("$dir/$file");
+            }
+            if ($deleteSelf) {
+                rmdir($dir);
+            }
+        }
+        delTree($buildRoot, false);
+
     }
 
 } else {
@@ -512,8 +528,9 @@ if ($doManual) {
     $dir = new RecursiveDirectoryIterator($srcRoot, FilesystemIterator::SKIP_DOTS);
 
     foreach ($dir as $fileinfo) {
-        $lcfile = strtolower($fileinfo->getFilename());
 
+        $lcfile = strtolower($fileinfo->getFilename());
+        $filename = $fileinfo->getFilename();
 
         $found = false;
 
@@ -526,25 +543,31 @@ if ($doManual) {
                 $manualDir = strtolower($manualDir);
                 if (strPos($lcfile, $manualDir) !== false) {
 
-                    Output::Verbose("\t$lcfile to $copyRoot/$lcfile", $verbose);
+                    Output::Verbose("\t$filename to $copyRoot/$filename", $verbose);
 
                     //copy_r($srcRoot."/".$lcfile, $copyRoot."/".$lcfile);
 
-                    $files = scandir($srcRoot . DIRECTORY_SEPARATOR . $lcfile);
+                    $files = scandir($srcRoot . DIRECTORY_SEPARATOR . $filename);
                     foreach ($files as $file) {
                         if( $file == "." || $file == ".." ) {
                             continue;
                         }
                         Output::Verbose("\t\t$file", $verbose);
 
-                        $copyDir = $copyRoot.DIRECTORY_SEPARATOR.$lcfile;
+                        $copyDir = $copyRoot.DIRECTORY_SEPARATOR.$filename;
                         if (!file_exists($copyDir)) {
                             Output::Verbose("Creating $copyDir...", $verbose);
-                            mkdir($copyDir, 0777, true);
+                            $mkdirSuccess = mkdir($copyDir, 0777, true);
+                            if (!$mkdirSuccess) {
+                                die("Directory creation failure on ".$copyDir);
+                            }
                         }
 
 
-                        custom_copy($srcRoot.DIRECTORY_SEPARATOR.$lcfile.DIRECTORY_SEPARATOR.$file, strtolower($copyDir.DIRECTORY_SEPARATOR.$file));
+                        custom_copy(
+                            $srcRoot.DIRECTORY_SEPARATOR.$filename.DIRECTORY_SEPARATOR.$file,
+                            $copyDir.DIRECTORY_SEPARATOR.$file
+                        );
                     }
 
                     //$include = true;
@@ -684,6 +707,10 @@ function custom_copy($src, $dst) {
 
     global $verbose;
 
+    Output::Verbose("custom_copy:", $verbose);
+    Output::Verbose("\tSource: $src", $verbose);
+    Output::Verbose("\tSource: $dst", $verbose);
+    
     if (!is_dir($src)) {
         copy($src, $dst);
         return;
@@ -709,7 +736,7 @@ function custom_copy($src, $dst) {
             }
             else {
                 $source = $src . DIRECTORY_SEPARATOR . $file;
-                $destination = strtolower($dst) . DIRECTORY_SEPARATOR . strtolower($file);
+                $destination = $dst . DIRECTORY_SEPARATOR . $file;
                 //copy($src . '/' . $file, $dst . '/' . $file);
                 copy($source, $destination);
                 Output::Verbose('Copied '.$destination, $verbose);
