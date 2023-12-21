@@ -22,7 +22,7 @@ require_once(__DIR__ . '/Utilities/Analyzer.php');
 //$_latestReleaseCPhar = $repo->GetLatestReleaseVersion();
 
 // Settings
-$_createPharVersion = '2.0.0-BETA1';
+$_createPharVersion = '2.0.1';
 $_minPhpVersion = '8.1.0';
 $showColors = true;
 
@@ -303,10 +303,12 @@ Output::Heading('Composer Info');
 Output::Info("Currently using version ".$composer->GetComposerVersion()." of Composer.");
 file_put_contents(__DIR__.'/composer-version.txt', $composer->GetComposerVersion());
 
+Output::Heading("Installing Composer dependencies:");
+echo $composer->RunCommand('i', true);
+
 if ($update) {
     Output::Heading("Upgrading and installing from Composer:\n");
 	echo $composer->RunCommand('u', true);
-	echo $composer->RunCommand('i', true);
 	//run_shell_cmd('php "' . $composerPath . '" --working-dir="' . escapeshellarg($composerJsonPath) . '" u');
 	//run_shell_cmd('php "' . $composerPath . '" --working-dir="' . escapeshellarg($composerJsonPath) . '" i');
 
