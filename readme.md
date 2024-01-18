@@ -14,6 +14,10 @@ that are detached from any code repository.
 
 > _Composer support has been introduced in v2.0.0, and is relatively fresh, so proceed with caution. This will be supported on Linux._
 
+```bash
+composer require barkley/create-phar
+```
+
 Install the Composer package `barkley\create-phar` ([see Packagist](https://packagist.org/packages/barkley/create-phar)).
 Once installed, you should be able to run `php vendor/barkley/create-phar/build.php` from the root of your project. (_Anytime instructions below refer to the command `create-phar`, you will need to use this path instead)_
 
