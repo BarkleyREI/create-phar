@@ -4,6 +4,7 @@ ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
+use Barkley\CreatePhar\Config\ProjectConfig;
 use Barkley\CreatePhar\Utilities\Composer;
 use Barkley\CreatePhar\Utilities\Docs;
 use Barkley\CreatePhar\Utilities\Validation;
@@ -16,13 +17,14 @@ require_once(__DIR__.'/Utilities/Version.php');
 //require_once(__DIR__.'/GitHub/Repository.php');
 require_once(__DIR__ . '/Validation.php');
 require_once(__DIR__ . '/Utilities/Analyzer.php');
+require_once(__DIR__ . '/Config/ProjectConfig.php');
 
 
 //$repo = new Repository();
 //$_latestReleaseCPhar = $repo->GetLatestReleaseVersion();
 
 // Settings
-$_createPharVersion = '2.0.1';
+$_createPharVersion = '2.1.0';
 $_minPhpVersion = '8.1.0';
 $showColors = true;
 
@@ -41,6 +43,7 @@ array_shift($argv);
 /*--- Variable setup --*/
 $projectDirectory = getcwd(); // directory that the project is running from
 $configIniPath = $projectDirectory.'/src/php/config.ini';   // project config file
+$projectConfig = new ProjectConfig($configIniPath);
 $composer = new Composer($projectDirectory);
 $docs = new Docs($projectDirectory);
 $version = new Version($projectDirectory, $_createPharVersion);
@@ -158,10 +161,7 @@ if (hasArgument('init')) {
 
 /*--- Config settings ---*/
 Output::Heading("Configuration settings:\n");
-if (!file_exists($configIniPath)) {
-    Output::Warning('This project may not have initialized. To setup a project at this location, run the command "create-phar init".');
-    Output::Error('Exiting... cannot find configuration file at path '.$configIniPath);
-}
+$projectConfig->Validate(true);
 Output::Message('Project directory: '.$projectDirectory);
 Output::Message('Project configuration: '.$configIniPath);
 Output::Message('Build script directory: '.__DIR__);
@@ -180,10 +180,8 @@ if ($update) {
 
 
 
-
-$ini = parse_ini_file($configIniPath,true);
-$project = $ini['project']['name'];
-$excludeDirectories = explode(",", $ini['project']['exclude_directories']);
+$project = $projectConfig->GetProjectName();
+$excludeDirectories = $projectConfig->GetExcludeDirectories();
 $excludeDirectories[] = '.idea';
 if ($verbose) {
 	Output::Verbose('Excluding the following directories:');
@@ -192,7 +190,7 @@ if ($verbose) {
 	}
 }
 
-$manualCopies = explode(",", $ini['project']['manual_copies']);
+$manualCopies = $projectConfig->GetManualCopies();
 if ($verbose) {
 	Output::Verbose('Manual copies are as follows:');
 	foreach ($manualCopies as $mCopy) {
@@ -200,12 +198,12 @@ if ($verbose) {
 	}
 }
 
-$manualCopyFiles = isset($ini['project']['manual_copy_files']) ? explode(",", $ini['project']['manual_copy_files']) : array();
+$manualCopyFiles = $projectConfig->GetManualCopyFiles();
 if (count($manualCopyFiles) > 0) {
     Output::Warning('Your project configuration has a defined \'manual_copy_files\' value. This functionality is no longer supported.');
 }
 
-$includePharInCopiedFolders = isset($ini['project']['phar_in_manual_copies']) && $ini['project']['phar_in_manual_copies'] == '1';
+$includePharInCopiedFolders = $projectConfig->GetPharInManualCopies();
 if ($includePharInCopiedFolders) {
     Output::Message('PHAR file will be copied into any defined manual_copy directories.');
 } else {
@@ -215,7 +213,7 @@ if ($includePharInCopiedFolders) {
 
 
 $useDeprecatedVendors = false;
-if (array_key_exists('vendor_includes', $ini['project'])) {
+if (array_key_exists('vendor_includes', $projectConfig->GetRawConfigArray()['project'])) {
     Output::Warning("Your configuration file is using vendor_includes, which has been deprecated in version 1.2.0 and will be removed moving forward. Please move to using vendor_excludes instead.");
     $useDeprecatedVendors = true;
 }
@@ -224,7 +222,7 @@ $vendorIncludes = array();
 $vendorExcludes = array();
 
 if ($useDeprecatedVendors) {
-    foreach (explode(',', $ini['project']['vendor_includes']) as $viItem) {
+    foreach (explode(',', $projectConfig->GetRawConfigArray()['project']['vendor_includes']) as $viItem) {
         if (!empty($viItem)) {
             $vendorIncludes[] = $viItem;
             Output::Message("Vendor directory $viItem will be included.\n");
@@ -232,7 +230,7 @@ if ($useDeprecatedVendors) {
     }
     print "\n";
 } else {
-    $vendorExcludesString = $ini['project']['vendor_excludes'] ?? null; // array_key_exists('vendor_excludes', $ini['project']) ?  : null;
+    $vendorExcludesString = $projectConfig->GetRawConfigArray()['project']['vendor_excludes'] ?? null; // array_key_exists('vendor_excludes', $projectConfig->GetRawConfigArray()['project']) ?  : null;
 	if ($vendorExcludesString !== null) {
 		foreach (explode(',', $vendorExcludesString) as $veItem) {
 			if (!empty($veItem)) {
@@ -502,6 +500,11 @@ if ($doPhar) {
 
     Output::Info("PHAR file created as " . $buildRoot . "/" . $project . ".phar");
 
+    // Modify Extract_Phar function to be specific to the particular PHAR file
+    $funcPostfix = 'Extract_Phar'.$projectConfig->GetProjectNameAsFunctionPostfix();
+    findAndReplaceInPhar($buildRoot . '/' . $project . '.phar', 'Extract_Phar', $funcPostfix);
+    Output::Info('Modified PHAR file to use function '.$funcPostfix);
+
     copy($buildRoot . "/" . $project . ".phar", $buildRoot . "/" . $project . ".ext");
     Output::Info("PHAR file copied as .ext\n");
 
@@ -647,7 +650,11 @@ Output::Message("Composer project updated as version $cp_v");
 
 
 
-
+function findAndReplaceInPhar(string $filename, string $find, string $replace) : void {
+    $fgc = file_get_contents($filename);
+    $fgc = str_replace($find, $replace, $fgc);
+    file_put_contents($filename, $fgc);
+}
 
 
 
