@@ -501,7 +501,7 @@ if ($doPhar) {
 
     $phar->setStub($phar->createDefaultStub("index_".$projectConfig->GetProjectNameAsFunctionPostfix().".php"));
 
-    unlink($srcRoot.DIRECTORY_SEPARATOR.$projectConfig->GetProjectNameAsFunctionPostfix());
+    unlink($srcRoot.DIRECTORY_SEPARATOR.'index_'.$projectConfig->GetProjectNameAsFunctionPostfix().'.php');
     Output::Info('Removed temporary stub file '.$srcRoot.DIRECTORY_SEPARATOR.$projectConfig->GetProjectNameAsFunctionPostfix());
 
     copy($srcRoot . "/config.ini", $buildRoot . "/" . $project . ".config.ini");
