@@ -57,7 +57,7 @@ class ProjectConfig {
     }
 
     public function GetPharInManualCopies() : bool {
-        return isset($this->_ini['project']['phar_in_manual_copies']) && $this->_ini['project']['phar_in_manual_copies'] == '1'
+        return isset($this->_ini['project']['phar_in_manual_copies']) && $this->_ini['project']['phar_in_manual_copies'] == '1';
     }
 
     public function GetRawConfigArray() : array {
