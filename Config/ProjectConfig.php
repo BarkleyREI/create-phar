@@ -37,11 +37,11 @@ class ProjectConfig {
         return $this->_ini['project']['name'];
     }
 
-    public function GetProjectNameAsFunctionPostfix() : string {
-        $pn = $this->GetProjectName();
-        $pn = strtolower($pn);
-        return '_BCP_'.preg_replace("/[^a-z]/", "_", $pn);
-    }
+//    public function GetProjectNameAsFunctionPostfix() : string {
+//        $pn = $this->GetProjectName();
+//        $pn = strtolower($pn);
+//        return '_BCP_'.preg_replace("/[^a-z]/", "_", $pn);
+//    }
 
     public function GetExcludeDirectories() : array {
         return explode(',', $this->_ini['project']['exclude_directories']);

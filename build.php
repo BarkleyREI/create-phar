@@ -24,7 +24,7 @@ require_once(__DIR__ . '/Config/ProjectConfig.php');
 //$_latestReleaseCPhar = $repo->GetLatestReleaseVersion();
 
 // Settings
-$_createPharVersion = '2.1.0';
+$_createPharVersion = '2.0.2';
 $_minPhpVersion = '8.1.0';
 $showColors = true;
 
@@ -404,9 +404,6 @@ if ($doPhar) {
 
     Output::Heading('Building PHAR file:');
 
-    copy($srcRoot.DIRECTORY_SEPARATOR.'index.php', $srcRoot.DIRECTORY_SEPARATOR.'index_'.$projectConfig->GetProjectNameAsFunctionPostfix().'.php');
-    Output::Info('Created temporary index stub '.$srcRoot.DIRECTORY_SEPARATOR.$projectConfig->GetProjectNameAsFunctionPostfix());
-
     $phar = new Phar(
         $fullPath,
         0,
@@ -499,19 +496,11 @@ if ($doPhar) {
 //    }
 
 
-    $phar->setStub($phar->createDefaultStub("index_".$projectConfig->GetProjectNameAsFunctionPostfix().".php"));
-
-    unlink($srcRoot.DIRECTORY_SEPARATOR.'index_'.$projectConfig->GetProjectNameAsFunctionPostfix().'.php');
-    Output::Info('Removed temporary stub file '.$srcRoot.DIRECTORY_SEPARATOR.$projectConfig->GetProjectNameAsFunctionPostfix());
+    $phar->setStub($phar->createDefaultStub("index.php"));
 
     copy($srcRoot . "/config.ini", $buildRoot . "/" . $project . ".config.ini");
 
     Output::Info("PHAR file created as " . $buildRoot . "/" . $project . ".phar");
-
-    // Modify Extract_Phar function to be specific to the particular PHAR file
-    $funcPostfix = 'Extract_Phar'.$projectConfig->GetProjectNameAsFunctionPostfix();
-    //findAndReplaceInPhar($buildRoot . '/' . $project . '.phar', 'Extract_Phar', $funcPostfix);
-    Output::Info('Modified PHAR file to use function '.$funcPostfix);
 
     copy($buildRoot . "/" . $project . ".phar", $buildRoot . "/" . $project . ".ext");
     Output::Info("PHAR file copied as .ext\n");
