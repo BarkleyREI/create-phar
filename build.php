@@ -404,6 +404,9 @@ if ($doPhar) {
 
     Output::Heading('Building PHAR file:');
 
+    copy($srcRoot.DIRECTORY_SEPARATOR.'index.php', $srcRoot.DIRECTORY_SEPARATOR.'index_'.$projectConfig->GetProjectNameAsFunctionPostfix().'.php');
+    Output::Info('Created temporary index stub '.$srcRoot.DIRECTORY_SEPARATOR.$projectConfig->GetProjectNameAsFunctionPostfix());
+
     $phar = new Phar(
         $fullPath,
         0,
@@ -422,9 +425,11 @@ if ($doPhar) {
 //        PharUtilities::ExtractToTempDirectory($srcRoot, $key);
 //    }
 
+
+
     $filterIterator = new CallbackFilterIterator($iterator, function ($file) {
 
-        global $excludeDirectories, $vendorIncludes, $vendorExcludes, $useDeprecatedVendors, $verbose;
+        global $excludeDirectories, $vendorIncludes, $vendorExcludes, $useDeprecatedVendors, $verbose, $projectConfig;
 
         $lcFile = strtolower($file);
 
@@ -494,7 +499,10 @@ if ($doPhar) {
 //    }
 
 
-    $phar->setStub($phar->createDefaultStub("index.php"));
+    $phar->setStub($phar->createDefaultStub("index_".$projectConfig->GetProjectNameAsFunctionPostfix().".php"));
+
+    unlink($srcRoot.DIRECTORY_SEPARATOR.$projectConfig->GetProjectNameAsFunctionPostfix());
+    Output::Info('Removed temporary stub file '.$srcRoot.DIRECTORY_SEPARATOR.$projectConfig->GetProjectNameAsFunctionPostfix());
 
     copy($srcRoot . "/config.ini", $buildRoot . "/" . $project . ".config.ini");
 
@@ -502,7 +510,7 @@ if ($doPhar) {
 
     // Modify Extract_Phar function to be specific to the particular PHAR file
     $funcPostfix = 'Extract_Phar'.$projectConfig->GetProjectNameAsFunctionPostfix();
-    findAndReplaceInPhar($buildRoot . '/' . $project . '.phar', 'Extract_Phar', $funcPostfix);
+    //findAndReplaceInPhar($buildRoot . '/' . $project . '.phar', 'Extract_Phar', $funcPostfix);
     Output::Info('Modified PHAR file to use function '.$funcPostfix);
 
     copy($buildRoot . "/" . $project . ".phar", $buildRoot . "/" . $project . ".ext");
@@ -650,11 +658,13 @@ Output::Message("Composer project updated as version $cp_v");
 
 
 
-function findAndReplaceInPhar(string $filename, string $find, string $replace) : void {
-    $fgc = file_get_contents($filename);
-    $fgc = str_replace($find, $replace, $fgc);
-    file_put_contents($filename, $fgc);
-}
+//function findAndReplaceInPhar(string $filename, string $find, string $replace) : void {
+//    $fgc = file_get_contents($filename);
+//    $fgc = str_replace($find, $replace, $fgc);
+//    file_put_contents($filename, $fgc);
+//    $phar = new Phar($filename);
+//    $phar->set
+//}
 
 
 
