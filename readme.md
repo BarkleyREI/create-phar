@@ -37,6 +37,10 @@ example, if you run `create-phar init` in the directory _c:\\TestProject\\_,
 your project will have the name _Testproject_ and be in the namespace 
 _rei\TestProject_.
 
+## Configuration 
+
+__TO DO__
+
 ## Project Build
 
 To build projects after initialization, simply run the command `create-phar` within the project directory.
