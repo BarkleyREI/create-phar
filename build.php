@@ -24,7 +24,7 @@ require_once(__DIR__ . '/Config/ProjectConfig.php');
 //$_latestReleaseCPhar = $repo->GetLatestReleaseVersion();
 
 // Settings
-$_createPharVersion = '2.0.2';
+$_createPharVersion = '2.0.3';
 $_minPhpVersion = '8.1.0';
 $showColors = true;
 

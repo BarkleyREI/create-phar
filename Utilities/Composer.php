@@ -61,7 +61,7 @@ class Composer {
         return $output;
     }
 
-    private function _ShellExec($cmd) : string {
+    private function _ShellExec($cmd) : ?string {
         //echo "\n\n".$cmd."\n\n\n";
 		Output::Verbose("Shell Exec: ".$cmd, $this->_verbose);
         return shell_exec($cmd.' 2>&1');
