@@ -590,6 +590,9 @@ if ($doManual) {
         foreach ($manualCopies as $manualDir) {
             $src = $buildRoot . "/" . $project . ".phar";
             $dest = $copyRoot.DIRECTORY_SEPARATOR.$manualDir.DIRECTORY_SEPARATOR.$project.'.phar';
+
+			Output::Verbose("Copying file $src to $dest");
+
             copy($src, $dest);
 
             $add = '';
