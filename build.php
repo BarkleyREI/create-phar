@@ -24,7 +24,7 @@ require_once(__DIR__ . '/Config/ProjectConfig.php');
 //$_latestReleaseCPhar = $repo->GetLatestReleaseVersion();
 
 // Settings
-$_createPharVersion = '2.0.3-rev2';
+$_createPharVersion = '2.0.3-rev3';
 $_minPhpVersion = '8.1.0';
 $showColors = true;
 $excludePeriodPrefix = true;
@@ -413,17 +413,9 @@ if ($doPhar) {
 
 
     // Iterate through and create
-
     $iterator = new \RecursiveIteratorIterator(
         new \RecursiveDirectoryIterator($srcRoot, \FilesystemIterator::SKIP_DOTS)
     );
-
-
-//    foreach ($iterator as $key => $value) {
-//        PharUtilities::ExtractToTempDirectory($srcRoot, $key);
-//    }
-
-
 
     $filterIterator = new CallbackFilterIterator($iterator, function ($file) {
 
@@ -436,7 +428,7 @@ if ($doPhar) {
 		$lcFile = str_replace("\\", DIRECTORY_SEPARATOR, $lcFile);
 
         $dispFile = $lcFile;
-        $maxDispLength = 40;
+        $maxDispLength = 80;
         if (strlen($dispFile) > ($maxDispLength + 3)) {
             $dispFile = "..." . substr($dispFile, -$maxDispLength);
         }
@@ -446,20 +438,23 @@ if ($doPhar) {
             $exDir = strtolower($exDir);
 
             if (strPos($lcFile, DIRECTORY_SEPARATOR."$exDir".DIRECTORY_SEPARATOR) !== false) {
-                Output::Verbose("Exclusion: Match on /$exDir/ to $dispFile", $verbose);
+                Output::Verbose("Exclusion: Match on /$exDir/ to \n\t$file", $verbose);
                 return false;
             } elseif (strPos($lcFile, "/$exDir/") !== false) {
-                Output::Verbose("Exclusion: Match on /$exDir/ to $dispFile", $verbose);
+                Output::Verbose("Exclusion: Match on /$exDir/ to \n\t$file", $verbose);
                 return false;
+            } elseif ($excludePeriodPrefix && str_starts_with($file, '.')) {
+	            Output::Verbose("Exclusion: Period match on /$exDir/ to \n\t$file", $verbose);
+	            return false;
+            } else {
+				Output::Verbose("Inclusion: $dispFile");
             }
-			if ($excludePeriodPrefix && str_starts_with($exDir, '.')) {
-				Output::Success('Test Exclusion: '.$exDir);
-				return false;
-			}
 
         }
 
-        if (strpos($lcFile, 'vendor') !== false) {
+        if (str_contains($lcFile, 'vendor')) {
+
+			Output::Verbose("Inspecting vendor directory for exclusion list...");
 
             $inc = !$useDeprecatedVendors;
             $output = array();
