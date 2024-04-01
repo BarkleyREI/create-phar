@@ -24,7 +24,7 @@ require_once(__DIR__ . '/Config/ProjectConfig.php');
 //$_latestReleaseCPhar = $repo->GetLatestReleaseVersion();
 
 // Settings
-$_createPharVersion = '2.0.3-rev3';
+$_createPharVersion = '2.0.3-rev4';
 $_minPhpVersion = '8.1.0';
 $showColors = true;
 $excludePeriodPrefix = true;
@@ -443,7 +443,7 @@ if ($doPhar) {
             } elseif (strPos($lcFile, "/$exDir/") !== false) {
                 Output::Verbose("Exclusion: Match on /$exDir/ to \n\t$file", $verbose);
                 return false;
-            } elseif ($excludePeriodPrefix && str_starts_with($file, '.')) {
+            } elseif ($excludePeriodPrefix && str_contains($file, DIRECTORY_SEPARATOR.'.')) {
 	            Output::Verbose("Exclusion: Period match on /$exDir/ to \n\t$file", $verbose);
 	            return false;
             } else {
