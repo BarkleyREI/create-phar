@@ -24,9 +24,10 @@ require_once(__DIR__ . '/Config/ProjectConfig.php');
 //$_latestReleaseCPhar = $repo->GetLatestReleaseVersion();
 
 // Settings
-$_createPharVersion = '2.0.3-rev1';
+$_createPharVersion = '2.0.3-rev2';
 $_minPhpVersion = '8.1.0';
 $showColors = true;
+$excludePeriodPrefix = true;
 
 $_latestReleaseCPhar = $_createPharVersion;
 
@@ -426,7 +427,7 @@ if ($doPhar) {
 
     $filterIterator = new CallbackFilterIterator($iterator, function ($file) {
 
-        global $excludeDirectories, $vendorIncludes, $vendorExcludes, $useDeprecatedVendors, $verbose, $projectConfig;
+        global $excludeDirectories, $vendorIncludes, $vendorExcludes, $useDeprecatedVendors, $verbose, $projectConfig, $excludePeriodPrefix;
 
         $lcFile = strtolower($file);
 
@@ -451,6 +452,11 @@ if ($doPhar) {
                 Output::Verbose("Exclusion: Match on /$exDir/ to $dispFile", $verbose);
                 return false;
             }
+			if ($excludePeriodPrefix && str_starts_with($exDir, '.')) {
+				Output::Success('Test Exclusion: '.$exDir);
+				return false;
+			}
+
         }
 
         if (strpos($lcFile, 'vendor') !== false) {
