@@ -12,6 +12,7 @@
 	"scripts": {
 		"create-phar": "Barkley\\Scripts\\Build"
 	},
+	"bin": ["bin/create-phar"],
     "require": {
         "knplabs/github-api": "^3.0",
         "symfony/http-client": "^6.2",
