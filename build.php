@@ -24,7 +24,7 @@ require_once(__DIR__ . '/Config/ProjectConfig.php');
 //$_latestReleaseCPhar = $repo->GetLatestReleaseVersion();
 
 // Settings
-$_createPharVersion = '2.1.1';
+$_createPharVersion = '2.1.2';
 $_minPhpVersion = '8.1.0';
 $showColors = true;
 $excludePeriodPrefix = true;
@@ -630,6 +630,24 @@ if ($verbose) {
 $errorCount = null;
 if (isset($analyzer)) {
     $errorCount = $analyzer->GetErrorCountTotal();
+}
+
+$docVersionUpdates = $docs->DoTemplateVersionUpdates();
+if (count($docVersionUpdates)) {
+	Output::Heading('Document Version Updates');
+	foreach ($docVersionUpdates as $key => $updates) {
+		$v = $key;
+		foreach ($updates as $update) {
+			Output::Info($v . ' - ' . $update);
+		}
+	}
+}
+
+$shieldResult = $docs->UpdateLogo();
+if (!$shieldResult) {
+	Output::Warning('To add the BarkleyOKRP logo section to your project\'s README.md file, add the text '.Docs::LOGO_MARKUP.' within the file.');
+} else {
+	Output::Info('Logo updated in your project\'s README.md file.');
 }
 
 $shieldResult = $docs->UpdateShields($version->GetCurrentShortVersion(), $errorCount, $_createPharVersion);

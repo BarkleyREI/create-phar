@@ -10,6 +10,10 @@ class Docs {
 
 	public const SHIELDS_MARKUP = '<!--shields-->';
 	public const SHIELDS_MARKUP_CLOSE = '<!--/shields-->';
+
+	public const LOGO_MARKUP = '<!--logo-->';
+	public const LOGO_MARKUP_CLOSE = '<!--/logo-->';
+
 	public const COLOR_ROCKET_RED = 'ea002a';
     public const SIMPLE_RED = 'red';
 
@@ -63,6 +67,35 @@ class Docs {
 		}
 
 		return $success;
+
+	}
+
+	/**
+	 * Perform updates to pre-existing templates due to version updates.
+	 * @return array
+	 */
+	public function DoTemplateVersionUpdates() : array {
+
+		$changes = array();
+
+		$file = $this->_projectDirectory . '/README.md';
+		$contents = file_get_contents($file);
+
+		$v_readme_pre_2_1_1 = '<p align="center">
+    <a href="https://www.barkleyus.com">
+        <img src="./docs/img/barkley-logo.png" alt="Barkley" >
+    </a>
+</p>';
+
+		if (str_contains($contents, $v_readme_pre_2_1_1)) {
+
+			$contents = str_replace($v_readme_pre_2_1_1, '<!--logo-->', $contents);
+			file_put_contents($file, $contents);
+			$changes['2.1.1'][] = 'Previous hardcoded Barkley logo present. Updated to placeholder which will use BarkleyOKRP branding moving forward.';
+
+		}
+
+		return $changes;
 
 	}
 
@@ -129,6 +162,39 @@ class Docs {
 			$content = $cNew;
 		} else {
 			$content = str_replace(self::SHIELDS_MARKUP, $shields, $content);
+		}
+		file_put_contents($filePath, $content);
+
+		return true;
+	}
+
+	/**
+	 * Updates the logo area README.md file of the project. Will return
+	 * false if this section cannot be found within the project.
+	 * @return bool
+	 */
+	public function UpdateLogo() : bool {
+		$filePath = $this->_projectDirectory.'/README.md';
+		$content = file_get_contents($filePath);
+
+		if (!str_contains($content, self::LOGO_MARKUP)) {
+			return false;
+		}
+
+		$logo = self::LOGO_MARKUP."\r\n";
+		$logo .= '<p align="center"><a href="https://www.barkleyokrp.com" target="_blank"><img src="https://raw.githubusercontent.com/BarkleyREI/create-phar/master/templates/docs/img/barkley-logo.png" alt="BarkleyOKRP" ></a></p>';
+		$logo .= self::LOGO_MARKUP_CLOSE."\r\n";
+
+		if (str_contains($content, self::LOGO_MARKUP_CLOSE)) {
+			$cNew = substr($content, 0, strpos($content, self::LOGO_MARKUP));
+			$cNew .= $logo;
+			$cNew .= substr(
+				$content,
+				strpos($content, self::LOGO_MARKUP_CLOSE) + strlen(self::LOGO_MARKUP_CLOSE)
+			);
+			$content = $cNew;
+		} else {
+			$content = str_replace(self::LOGO_MARKUP, $logo, $content);
 		}
 		file_put_contents($filePath, $content);
 
