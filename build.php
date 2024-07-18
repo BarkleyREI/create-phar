@@ -454,7 +454,7 @@ if ($doPhar) {
 
         if (str_contains($lcFile, 'vendor')) {
 
-			Output::Verbose("Inspecting vendor directory for exclusion list...");
+			Output::Verbose("Inspecting vendor directory for exclusion list...", $verbose);
 
             $inc = !$useDeprecatedVendors;
             $output = array();
@@ -592,7 +592,7 @@ if ($doManual) {
             $src = $buildRoot . "/" . $project . ".phar";
             $dest = $copyRoot.DIRECTORY_SEPARATOR.$manualDir.DIRECTORY_SEPARATOR.$project.'.phar';
 
-			Output::Verbose("Copying file $src to $dest");
+			Output::Verbose("Copying file $src to $dest", $verbose);
 
             copy($src, $dest);
 
