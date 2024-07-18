@@ -447,7 +447,7 @@ if ($doPhar) {
 	            Output::Verbose("Exclusion: Period match on /$exDir/ to \n\t$file", $verbose);
 	            return false;
             } else {
-				Output::Verbose("Inclusion: $dispFile");
+				Output::Verbose("Inclusion: $dispFile", $verbose);
             }
 
         }
