@@ -16,7 +16,7 @@ that are detached from any code repository.
 
 #### Install
 
-Install the Composer package `barkley\create-phar` ([see Packagist](https://packagist.org/packages/barkley/create-phar)).
+Install the Composer package `barkley/create-phar` ([see Packagist](https://packagist.org/packages/barkley/create-phar)).
 
 ```bash
 composer require barkley/create-phar
