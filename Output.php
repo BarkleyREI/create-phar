@@ -66,7 +66,7 @@ class Output {
 //    }
 
     public static function Warning($str) {
-        self::printColor("⚠ ".$str.self::_lineBreak, self::_yellow);
+        self::printColor("⚠  ".$str.self::_lineBreak, self::_yellow);
     }
     public static function Verbose($str, $verbose = true) {
         if (!$verbose) {

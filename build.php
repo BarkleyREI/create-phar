@@ -9,6 +9,7 @@ use Barkley\CreatePhar\Utilities\Composer;
 use Barkley\CreatePhar\Utilities\Docs;
 use Barkley\CreatePhar\Utilities\Validation;
 use Barkley\CreatePhar\Utilities\Version;
+use rei\CreatePhar\Docsify;
 use rei\CreatePhar\Output;
 
 require_once(__DIR__.'/Utilities/Composer.php');
@@ -18,13 +19,14 @@ require_once(__DIR__.'/Utilities/Version.php');
 require_once(__DIR__ . '/Validation.php');
 require_once(__DIR__ . '/Utilities/Analyzer.php');
 require_once(__DIR__ . '/Config/ProjectConfig.php');
+require_once(__DIR__ . '/Docsify.php');
 
 
 //$repo = new Repository();
 //$_latestReleaseCPhar = $repo->GetLatestReleaseVersion();
 
 // Settings
-$_createPharVersion = '2.1.2';
+$_createPharVersion = '2.2.0';
 $_minPhpVersion = '8.1.0';
 $showColors = true;
 $excludePeriodPrefix = true;
@@ -157,7 +159,8 @@ if (version_compare($_minPhpVersion,phpversion(),'>')) {
 if (hasArgument('init')) {
     include(__DIR__.'/Initialize.php');
     $init = new \rei\CreatePhar\Initialize($projectDirectory);
-    $init->Execute();
+	$init->Execute();
+	$init->InitializeDocsify($projectConfig);
 }
 
 /*--- Config settings ---*/
@@ -166,6 +169,13 @@ $projectConfig->Validate(true);
 Output::Message('Project directory: '.$projectDirectory);
 Output::Message('Project configuration: '.$configIniPath);
 Output::Message('Build script directory: '.__DIR__);
+
+$doDocsify = $projectConfig->SetupDocsify();
+Output::Message('Create public documentation: '.($doDocsify?'Enabled':'Disabled'));
+if (!$doDocsify) {
+	Output::Info('As of create-phar 2.2.0, you can create public documentation using Docsify. To enable this, set docsify=1 under your project configuration.');
+}
+
 
 if ($verbose) {
     Output::Message('Running with verbose output.');
@@ -665,6 +675,17 @@ $cp_v = $composer->UpdateVersion($v);
 Output::Message("Composer project updated as version $cp_v");
 
 
+/*******************/
+Output::Heading('Handling Docsify logic');
+if ($doDocsify) {
+	Docsify::Initialize($projectConfig);
+	Docsify::CopyRootReadme($projectConfig);
+	Docsify::CopyDocsFolder();
+	Docsify::BuildSidebar($v);
+	Output::Message('Docsify documentation built out. To preview public documentation, run the command: docsify service docsify');
+} else {
+	Output::Message('Docsify documentation is disabled for this project.');
+}
 
 
 

@@ -31,7 +31,11 @@ class Version {
 
 	public function GetCurrentShortVersion() : string {
 		$v = $this->GetCurrentVersion();
-		$e = explode('.', $v);
+		return self::ConvertToShortVersion($v);
+	}
+
+	public static function ConvertToShortVersion(string $version) : string {
+		$e = explode('.', $version);
 		return $e[0].'.'.$e[1].'.'.$e[2];
 	}
 

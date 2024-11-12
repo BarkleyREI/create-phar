@@ -2,7 +2,10 @@
 
 namespace rei\CreatePhar;
 
+use Barkley\CreatePhar\Config\ProjectConfig;
+
 require_once(__DIR__.'/Output.php');
+require_once(__DIR__.'/Docsify.php');
 
 class Initialize {
 
@@ -76,5 +79,24 @@ class Initialize {
         Output::Info('Running initial build...');
         Output::Message('');
     }
+
+	public function InitializeDocsify(ProjectConfig $projectConfig) : void {
+		Output::Heading('Initializing Docsify');
+		$docsifyVersion = Docsify::GetVersion();
+		if ($docsifyVersion === null) {
+			Output::Warning('Docsify not found on your system, so will not be initialized. To install follow instructions at https://docsify.js.org/#/quickstart');
+			return;
+		}
+		Output::Message("Version {$docsifyVersion} of Docsify is installed on your system.");
+
+		$exists = Docsify::HasBeenInitialized();
+		if ($exists) {
+			Output::Warning('Docsify already initialized.');
+			return;
+		}
+
+		Docsify::Initialize($projectConfig);
+		//shell_exec('npm i docsify-cli -g');
+	}
 
 }

@@ -37,6 +37,10 @@ class ProjectConfig {
         return $this->_ini['project']['name'];
     }
 
+	public function SetupDocsify() : bool {
+		return $this->_ini['project']['docsify'] === '1'??false;
+	}
+
 //    public function GetProjectNameAsFunctionPostfix() : string {
 //        $pn = $this->GetProjectName();
 //        $pn = strtolower($pn);

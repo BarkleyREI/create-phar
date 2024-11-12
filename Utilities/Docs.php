@@ -201,6 +201,28 @@ class Docs {
 		return true;
 	}
 
+	public function GetContents(bool $clean = false) : string {
+
+		$contents = file_get_contents($this->_projectDirectory.'/README.md');
+
+		if (!$clean) { return $contents; }
+
+		if (str_contains($contents, self::LOGO_MARKUP)) {
+			$contents =
+				substr($contents, 0, strpos($contents, self::LOGO_MARKUP)) .
+				substr($contents, strpos($contents, self::LOGO_MARKUP_CLOSE)+strlen(self::LOGO_MARKUP_CLOSE));
+		}
+
+		if (str_contains($contents, self::SHIELDS_MARKUP)) {
+			$contents =
+				substr($contents, 0, strpos($contents, self::SHIELDS_MARKUP)) .
+				substr($contents, strpos($contents, self::SHIELDS_MARKUP_CLOSE)+strlen(self::SHIELDS_MARKUP_CLOSE));
+		}
+
+		return $contents;
+
+	}
+
 	private function _GetBuildRoot() : string {
 		return $this->_projectDirectory . "/build";
 	}
