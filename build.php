@@ -9,24 +9,25 @@ use Barkley\CreatePhar\Utilities\Composer;
 use Barkley\CreatePhar\Utilities\Docs;
 use Barkley\CreatePhar\Utilities\Validation;
 use Barkley\CreatePhar\Utilities\Version;
-use rei\CreatePhar\Docsify;
+use Barkley\CreatePhar\Utilities\Docsify;
 use rei\CreatePhar\Output;
 
+require_once(__DIR__.'/vendor/autoload.php');
 require_once(__DIR__.'/Utilities/Composer.php');
 require_once(__DIR__.'/Utilities/Docs.php');
 require_once(__DIR__.'/Utilities/Version.php');
-//require_once(__DIR__.'/GitHub/Repository.php');
+require_once(__DIR__.'/GitHub/Repository.php');
 require_once(__DIR__ . '/Validation.php');
 require_once(__DIR__ . '/Utilities/Analyzer.php');
 require_once(__DIR__ . '/Config/ProjectConfig.php');
-require_once(__DIR__ . '/Docsify.php');
+require_once(__DIR__ . '/Utilities/Docsify.php');
 
 
 //$repo = new Repository();
 //$_latestReleaseCPhar = $repo->GetLatestReleaseVersion();
 
 // Settings
-$_createPharVersion = '2.2.0';
+$_createPharVersion = '2.2.1';
 $_minPhpVersion = '8.1.0';
 $showColors = true;
 $excludePeriodPrefix = true;
@@ -666,6 +667,23 @@ if (!$shieldResult) {
 } else {
 	Output::Info('Icons updated in your project\'s README.md file.');
 }
+
+if ($doDocsify) {
+	$repo = $projectConfig->GetGithubRepository();
+	if ($repo !== null) {
+		$docsifyResult = $docs->UpdateDocsifyInfo($repo);
+		if ($docsifyResult) {
+			Output::Info('Docsify page link updated in your project\'s README.md file.');
+		} else {
+			Output::Warning('To add dynamic project documentation link to your project\'s README.md file, add the text ' . Docs::DOCSIFY_MARKUP . ' within the file.');
+		}
+	} else {
+		Output::Warning('GitHub User and Project need set in your project configuration for README.md documentation to update.');
+	}
+} else {
+	Output::Info('Docsify project link replacement won\'t occur if Docsify is not enabled.');
+}
+
 
 /*******************/
 

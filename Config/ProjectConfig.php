@@ -2,6 +2,7 @@
 
 namespace Barkley\CreatePhar\Config;
 
+use Barkley\CreatePhar\GitHub\Repository;
 use rei\CreatePhar\Output;
 
 require_once(__DIR__.'/../Output.php');
@@ -67,5 +68,12 @@ class ProjectConfig {
     public function GetRawConfigArray() : array {
         return $this->_ini;
     }
+
+	public function GetGithubRepository() : ?Repository {
+		$user = $this->_ini['github']['user'];
+		$project = $this->_ini['github']['project'];
+		if (empty($user) || empty($project)) { return null; }
+		return new Repository($user, $project);
+	}
 
 }

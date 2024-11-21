@@ -2,6 +2,13 @@
     max-width: 80%
 }
 
+#sidebar-version {
+	margin-top: 2rem;
+	padding: 15px;
+	font-size: 0.8rem;
+	border-top: solid 1px #cacaca;
+}
+
 /*body, aside.sidebar {*/
 /*    background-color: #ffffe6;*/
 /*}*/

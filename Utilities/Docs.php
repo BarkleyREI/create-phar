@@ -2,6 +2,7 @@
 
 namespace Barkley\CreatePhar\Utilities;
 
+use Barkley\CreatePhar\GitHub\Repository;
 use rei\CreatePhar\Output;
 
 class Docs {
@@ -13,6 +14,9 @@ class Docs {
 
 	public const LOGO_MARKUP = '<!--logo-->';
 	public const LOGO_MARKUP_CLOSE = '<!--/logo-->';
+
+	public const DOCSIFY_MARKUP = '<!--docsify-->';
+	public const DOCSIFY_MARKUP_CLOSE = '<!--/docsify-->';
 
 	public const COLOR_ROCKET_RED = 'ea002a';
     public const SIMPLE_RED = 'red';
@@ -121,6 +125,43 @@ class Docs {
 		return "$imgMarkup\r\n";
 
 
+	}
+
+	private function _DoReplacement(string $fullContent, string $fillContent, string $startTag, string $endTag) : bool|string {
+		if (!str_contains($fullContent, $startTag)) {
+			return false;
+		}
+
+		$fillContent = $startTag . $fillContent . $endTag;
+
+		if (str_contains($fullContent, $endTag)) {
+			$cNew = substr($fullContent, 0, strpos($fullContent, $startTag));
+			$cNew .= $fillContent;
+			$cNew .= substr(
+				$fullContent,
+				strpos($fullContent, $endTag) + strlen($endTag)
+			);
+			$content = $cNew;
+		} else {
+			$content = str_replace($startTag, $fillContent, $fullContent);
+		}
+		return $content;
+	}
+
+	public function UpdateDocsifyInfo(Repository $repository) : bool {
+		$filePath = $this->_projectDirectory.'/README.md';
+		$content = file_get_contents($filePath);
+
+		$url = $repository->GetGithubPagesUrl();
+		$info = '<p>Refer to the <a href="'.$url.'" target="_blank">Project Documentation</a> page for this project for more information.</p>';
+
+		$res = $this->_DoReplacement($content, $info, self::DOCSIFY_MARKUP, self::DOCSIFY_MARKUP_CLOSE);
+
+		if ($res === false) { return false; }
+
+		file_put_contents($filePath, $res);
+
+		return true;
 	}
 
     /**
