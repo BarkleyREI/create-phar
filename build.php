@@ -27,7 +27,7 @@ require_once(__DIR__ . '/Utilities/Docsify.php');
 //$_latestReleaseCPhar = $repo->GetLatestReleaseVersion();
 
 // Settings
-$_createPharVersion = '2.2.1';
+$_createPharVersion = '2.2.2';
 $_minPhpVersion = '8.1.0';
 $showColors = true;
 $excludePeriodPrefix = true;
@@ -700,7 +700,7 @@ if ($doDocsify) {
 	Docsify::CopyRootReadme($projectConfig);
 	Docsify::CopyDocsFolder();
 	Docsify::BuildSidebar($v);
-	Output::Message('Docsify documentation built out. To preview public documentation, run the command: docsify service docsify');
+	Output::Message('Docsify documentation built out. To preview public documentation, run the command: docsify serve docsify');
 } else {
 	Output::Message('Docsify documentation is disabled for this project.');
 }
