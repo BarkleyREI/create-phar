@@ -12,7 +12,11 @@ use Barkley\CreatePhar\Utilities\Version;
 use Barkley\CreatePhar\Utilities\Docsify;
 use rei\CreatePhar\Output;
 
-require_once(__DIR__.'/vendor/autoload.php');
+if (file_exists(__DIR__.'/vendor/autoload.php')) {
+	require_once(__DIR__ . '/vendor/autoload.php');
+} else {
+	require_once(__DIR__.'/../../autoload.php');
+}
 require_once(__DIR__.'/Utilities/Composer.php');
 require_once(__DIR__.'/Utilities/Docs.php');
 require_once(__DIR__.'/Utilities/Version.php');
