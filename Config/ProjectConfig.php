@@ -76,4 +76,8 @@ class ProjectConfig {
 		return new Repository($user, $project);
 	}
 
+	public function GetDocsifyCodeHighlights() : array {
+		return $this->_ini['docsify']['highlights']??['bash','php'];
+	}
+
 }

@@ -35,6 +35,14 @@ class Docsify {
 		// Replacements
 		$contents = str_replace('{{name}}', str_replace("'", "&apos;", $projectConfig->GetProjectName()), $contents);
 
+		// Replacements for language highlighting
+		$languages = $projectConfig->GetDocsifyCodeHighlights();
+		$embeds = '';
+		foreach ($languages as $language) {
+			$embeds .= '<script src="//cdn.jsdelivr.net/npm/prismjs@1/components/prism-'.$language.'.min.js"></script>';
+		}
+		$contents = str_replace('{{highlights}}',$embeds, $contents);
+
 		file_put_contents('./docsify/index.html', $contents);
 
 		copy(__DIR__.'/../templates/docsify/theme-overrides.css', './docsify/theme-overrides.css');
@@ -47,6 +55,7 @@ class Docsify {
 
 	public static function CopyRootReadme() : void {
 
+		// If there is a root /docs/README.md file under the project, use that instead
 		if (file_exists('./docs/README.md')) {
 			copy('./docs/README.md', './docsify/README.md');
 		} else {
@@ -65,7 +74,7 @@ class Docsify {
 		self::_CopyDirectoryAndContents('./docs', './docsify/docs');
 	}
 
-	public static function BuildSidebar(string $version, array $exclusions = ['README.md']) : void {
+	public static function BuildSidebar(string $version, ?string $createPharVersion = null, array $exclusions = ['README.md']) : void {
 
 		$contents = array();
 		$contents[] = '- [Overview](README)';
@@ -84,7 +93,11 @@ class Docsify {
 		$contents[] = '';
 		$contents[] = '';
 		$short = Version::ConvertToShortVersion($version);
-		$contents[] = "<div id='sidebar-version'>Documentation built for version <strong>{$short}</strong></div>";
+		$contents[] = "<div id='sidebar-version'>Documentation built for version <strong>{$short}</strong>";
+		if ($createPharVersion !== null) {
+			$contents[] = "<br/>Built with create-phar version <strong>{$createPharVersion}</strong>";
+		}
+		$contents[] .= '</div>';
 
 		file_put_contents('./docsify/_sidebar.md', implode("\n", $contents));
 
