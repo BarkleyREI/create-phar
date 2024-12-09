@@ -70,8 +70,8 @@ class ProjectConfig {
     }
 
 	public function GetGithubRepository() : ?Repository {
-		$user = $this->_ini['github']['user'];
-		$project = $this->_ini['github']['project'];
+		$user = $this->_ini['github']['user']??null;
+		$project = $this->_ini['github']['project']??null;
 		if (empty($user) || empty($project)) { return null; }
 		return new Repository($user, $project);
 	}
