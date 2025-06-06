@@ -31,7 +31,7 @@ require_once(__DIR__ . '/Utilities/Docsify.php');
 //$_latestReleaseCPhar = $repo->GetLatestReleaseVersion();
 
 // Settings
-$_createPharVersion = '2.2.6';
+$_createPharVersion = '2.2.7';
 $_minPhpVersion = '8.1.0';
 $showColors = true;
 $excludePeriodPrefix = true;

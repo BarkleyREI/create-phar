@@ -3,9 +3,10 @@
 namespace rei\CreatePhar;
 
 use Barkley\CreatePhar\Config\ProjectConfig;
+use Barkley\CreatePhar\Utilities\Docsify;
 
 require_once(__DIR__.'/Output.php');
-require_once(__DIR__.'/Docsify.php');
+require_once(__DIR__.'/Utilities/Docsify.php');
 
 class Initialize {
 
